@@ -459,7 +459,7 @@ async def collect_all_keys(session: aiohttp.ClientSession,
     return result
 
 
-# ── tcp check ─────────────────────────────────────────────────────────────────
+# ── tcp + tls check ───────────────────────────────────────────────────────────
 
 async def tcp_check(host: str, port: int) -> float:
     try:
@@ -477,14 +477,50 @@ async def tcp_check(host: str, port: int) -> float:
     except Exception:
         return -1.0
 
+async def tls_check(host: str, port: int, sni: str) -> bool:
+    """
+    Attempt a TLS handshake to verify the server is actually alive and responding.
+    A successful handshake (even with cert mismatch) means the server is up.
+    This filters out servers that accept TCP but are dead/misconfigured as VLESS.
+    """
+    import ssl
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    try:
+        _, writer = await asyncio.wait_for(
+            asyncio.open_connection(host, port, ssl=ctx,
+                                    server_hostname=sni or host),
+            timeout=TCP_TIMEOUT + 1.0
+        )
+        writer.close()
+        try:
+            await writer.wait_closed()
+        except Exception:
+            pass
+        return True
+    except Exception:
+        return False
+
 async def check_keys_tcp(keys: list[str], sem: asyncio.Semaphore) -> list[tuple[float, str]]:
     async def _one(key: str):
         host, port = extract_host(key), extract_port(key)
         if not host or not port:
             return None
+        params = extract_params(key)
+        sec = params.get("security", "")
+        sni = params.get("sni", "")
         async with sem:
             lat = await tcp_check(host, port)
-        return (lat, key) if lat >= 0 else None
+            if lat < 0:
+                return None
+            # for TLS/Reality keys: verify TLS handshake to weed out dead servers
+            if sec in ("tls", "reality"):
+                ok = await tls_check(host, port, sni)
+                if not ok:
+                    log.debug(f"tls handshake failed: {host}:{port}")
+                    return None
+        return (lat, key)
 
     results = await asyncio.gather(*[_one(k) for k in keys])
     return sorted([r for r in results if r], key=lambda x: x[0])
