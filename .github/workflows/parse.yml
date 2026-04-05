@@ -26,13 +26,13 @@ jobs:
       - name: run parser
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python white-vless-main/search_vless.py
+        run: python search_vless.py
 
       - name: commit results
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add white-vless-main/filtered_vless_keys.txt
+          git add filtered_vless_keys.txt
           git commit -m "auto-update $(date '+%Y-%m-%d %H:%M')" || echo "no changes"
           git push --force-with-lease
         env:
