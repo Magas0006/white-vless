@@ -507,17 +507,28 @@ class BootstrapManager:
         try:
             proxy = f"socks5://127.0.0.1:{use_port}"
             connector = aiohttp.ProxyConnector.from_url(proxy)
-            async with aiohttp.ClientSession(connector=connector) as s:
-                async with s.get("https://api.myip.com", timeout=aiohttp.ClientTimeout(total=8)) as resp:
-                    if resp.status == 200:
-                        data = await resp.json(content_type=None)
-                        if data.get("cc") == "RU":
-                            self._proc = proc
-                            self._cfg_path = cfg_file.name
-                            self.socks_url = proxy
-                            BOOTSTRAP_SOCKS = proxy
-                            log.info(f"bootstrap RU proxy: {extract_host(key)}:{extract_port(key)}")
-                            ok = True
+            # retry up to 3 times — xray may need a moment to fully start
+            for attempt in range(3):
+                try:
+                    async with aiohttp.ClientSession(connector=connector) as s:
+                        async with s.get("https://api.myip.com", timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                            if resp.status == 200:
+                                data = await resp.json(content_type=None)
+                                if data.get("cc") == "RU":
+                                    self._proc = proc
+                                    self._cfg_path = cfg_file.name
+                                    self.socks_url = proxy
+                                    BOOTSTRAP_SOCKS = proxy
+                                    log.info(f"bootstrap RU proxy: {extract_host(key)}:{extract_port(key)}")
+                                    ok = True
+                                    break
+                                else:
+                                    log.debug(f"bootstrap non-RU cc={data.get('cc')} {extract_host(key)}")
+                                    break  # server works but not RU — no point retrying
+                except Exception as e:
+                    log.debug(f"bootstrap attempt {attempt+1} {extract_host(key)}: {e}")
+                    if attempt < 2:
+                        await asyncio.sleep(2.0)
         except Exception as e:
             log.debug(f"bootstrap try {extract_host(key)}: {e}")
         if not ok:
@@ -968,6 +979,15 @@ async def main():
             if ep not in seen_ep: seen_ep.add(ep); trusted_dedup.append(k)
         log.info(f"trusted keys (pre-validated): {len(trusted_dedup)}")
 
+        # Step 1: find bootstrap RU proxy from trusted keys
+        # This gives us a Russian IP to validate everything else through
+        log.info("bootstrap: searching for RU proxy in trusted keys...")
+        bootstrap_mgr = await start_bootstrap_proxy(trusted_dedup[:120])
+        if bootstrap_mgr.socks_url:
+            log.info("bootstrap: RU proxy found — all TCP checks will run through it")
+        else:
+            log.warning("bootstrap: no RU proxy found — TCP checks run from GitHub IP (less reliable)")
+
         # dedup untrusted against trusted endpoints
         untrusted_dedup = []
         for k, t in untrusted_raw:
@@ -975,6 +995,7 @@ async def main():
             if ep not in seen_ep: seen_ep.add(ep); untrusted_dedup.append((k, t))
         log.info(f"untrusted candidates for TCP check: {len(untrusted_dedup)}")
 
+        # Step 2: TCP-check untrusted keys — routes through bootstrap RU proxy if available
         sem = asyncio.Semaphore(CONCURRENCY)
         untrusted_alive = await check_keys_tcp(untrusted_dedup, sem)
         log.info(f"untrusted alive: {len(untrusted_alive)}")
