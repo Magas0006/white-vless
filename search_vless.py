@@ -17,6 +17,7 @@ import subprocess
 import tempfile
 import json
 import logging
+from html import unescape as html_unescape
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse, quote
 from typing import Optional
 
@@ -250,6 +251,8 @@ def clean_key(raw):
 
 def _parse_keys(text):
     keys = []
+    # decode HTML entities first (&amp; → &, etc.)
+    text = html_unescape(text)
     for line in text.splitlines():
         line = line.strip()
         targets = [line] if line.startswith("vless://") else re.findall(r'vless://[^\s\'"<>\]\[]+', line)
