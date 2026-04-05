@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # whitevless — async vless/reality parser-validator
 # runs on github actions (outside RU), targets 200+ keys for russian users
-# deps: pip install aiohttp
+# deps: pip install aiohttpppppp
 
 import asyncio
 import aiohttp
