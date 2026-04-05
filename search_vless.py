@@ -251,8 +251,11 @@ def clean_key(raw):
 
 def _parse_keys(text):
     keys = []
-    # decode HTML entities first (&amp; → &, etc.)
+    # decode HTML entities (&amp; → &, &amp%3B → & etc.)
     text = html_unescape(text)
+    # also handle percent-encoded HTML entities like amp%3B
+    text = re.sub(r'&amp%3B', '&', text, flags=re.I)
+    text = re.sub(r'%26amp%3B', '&', text, flags=re.I)
     for line in text.splitlines():
         line = line.strip()
         targets = [line] if line.startswith("vless://") else re.findall(r'vless://[^\s\'"<>\]\[]+', line)
@@ -273,7 +276,10 @@ async def fetch_direct(session, sources):
     keys = []
     for (url, _, trusted_src), text in zip(sources, texts):
         trusted = trusted_src or any(p in url for p in TRUSTED_SOURCE_PATTERNS)
-        for k in _parse_keys(text): keys.append((k, trusted))
+        found = _parse_keys(text)
+        for k in found: keys.append((k, trusted))
+        if found:
+            log.info(f"  direct {url.split('/')[-1][:40]}: {len(found)} keys (trusted={trusted})")
     log.info(f"direct sources: {len(keys)} keys")
     return keys
 
@@ -1044,7 +1050,15 @@ async def main():
             final.append(f"{key.split('#')[0]}#{quote(remark)}")
 
         write_output(final)
-        log.info(f"done: {len(final)} keys")
+
+        # stats
+        trusted_final = sum(1 for _, k in selected if k in {kk for kk in trusted_dedup})
+        log.info(f"done: {len(final)} keys ({trusted_final} from trusted sources, {len(final)-trusted_final} from untrusted+TCP-checked)")
+        # show top hosters
+        from collections import Counter
+        hoster_counts = Counter(pre_geo.get(extract_host(k), {}).get("isp", extract_host(k))[:30] for _, k in selected)
+        for isp, cnt in hoster_counts.most_common(10):
+            log.info(f"  hoster: {isp} — {cnt} keys")
 
         if bootstrap_mgr:
             bootstrap_mgr.stop()
