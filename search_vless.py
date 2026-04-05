@@ -43,7 +43,7 @@ SNI_FILES = {
     "yota":          os.path.join(SNI_DIR, "yota",          "sni.txt"),
     "all_operators": os.path.join(SNI_DIR, "all_operators", "sni.txt"),
 }
-BLACKLIST_FILE = os.path.join(BASE_DIR, "blacklist", "vless_blacklist.txt")
+CLASH_FILE = os.path.join(BASE_DIR, "clash.yaml")
 HOSTS_FILE     = os.path.join(BASE_DIR, "ip", "hosts.txt")
 
 MAX_RU_KEYS    = 200
@@ -726,6 +726,170 @@ def select_keys(alive, max_count):
         if ep not in seen: seen.add(ep); selected.append((lat, key))
     return selected
 
+def _key_to_clash_proxy(key: str, name: str) -> Optional[dict]:
+    """Convert a vless:// URI to a Clash Meta proxy dict."""
+    try:
+        p = urlparse(key)
+        params = {k: v[0] for k, v in parse_qs(p.query).items()}
+        sec = params.get("security", "")
+        tp  = params.get("type", "tcp")
+
+        proxy: dict = {
+            "name":     name,
+            "type":     "vless",
+            "server":   p.hostname,
+            "port":     p.port,
+            "uuid":     p.username,
+            "udp":      True,
+            "flow":     params.get("flow", ""),
+        }
+
+        if sec == "reality":
+            proxy["tls"] = True
+            proxy["servername"] = params.get("sni", "")
+            proxy["reality-opts"] = {
+                "public-key": params.get("pbk", ""),
+                "short-id":   params.get("sid", ""),
+            }
+            if params.get("fp"):
+                proxy["client-fingerprint"] = params.get("fp")
+        elif sec == "tls":
+            proxy["tls"] = True
+            proxy["servername"] = params.get("sni", "")
+            proxy["skip-cert-verify"] = True
+
+        if tp == "ws":
+            proxy["network"] = "ws"
+            proxy["ws-opts"] = {
+                "path":    params.get("path", "/"),
+                "headers": {"Host": params.get("host", p.hostname)},
+            }
+        elif tp == "grpc":
+            proxy["network"] = "grpc"
+            proxy["grpc-opts"] = {"grpc-service-name": params.get("serviceName", "")}
+        elif tp in ("xhttp", "http"):
+            proxy["network"] = "http"
+            proxy["http-opts"] = {"path": [params.get("path", "/")]}
+
+        # remove empty flow
+        if not proxy["flow"]:
+            del proxy["flow"]
+
+        return proxy
+    except Exception as e:
+        log.debug(f"clash proxy convert: {e}")
+        return None
+
+def write_clash(final_keys: list[str]):
+    """Generate clash.yaml with urltest group — client auto-picks fastest proxy."""
+    import re as _re
+
+    proxies = []
+    names   = []
+    for key in final_keys:
+        # extract remark as name
+        if "#" in key:
+            raw_name = key.split("#", 1)[1]
+            from urllib.parse import unquote as _unquote
+            name = _unquote(raw_name)
+        else:
+            name = extract_host(key)
+        # ensure unique name
+        base, n = name, 1
+        while name in names:
+            name = f"{base} ({n})"
+            n += 1
+        clean = key.split("#")[0]
+        proxy = _key_to_clash_proxy(clean, name)
+        if proxy:
+            proxies.append(proxy)
+            names.append(name)
+
+    if not proxies:
+        log.warning("clash: no proxies to write")
+        return
+
+    # minimal but functional clash meta config
+    import yaml as _yaml  # optional dep — fallback to manual serialization
+    try:
+        import yaml
+        def _dump(obj):
+            return yaml.dump(obj, allow_unicode=True, default_flow_style=False, sort_keys=False)
+    except ImportError:
+        # yaml not available — write manually (good enough for simple dicts)
+        def _scalar(v):
+            if isinstance(v, bool): return "true" if v else "false"
+            if isinstance(v, (int, float)): return str(v)
+            s = str(v)
+            if any(c in s for c in ':{}[]|>&*!,#?@`\'"') or s != s.strip():
+                return f'"{s}"'
+            return s
+
+        def _dict_to_yaml(d, indent=0):
+            lines = []
+            pad = "  " * indent
+            for k, v in d.items():
+                if isinstance(v, dict):
+                    lines.append(f"{pad}{k}:")
+                    lines.append(_dict_to_yaml(v, indent + 1))
+                elif isinstance(v, list):
+                    lines.append(f"{pad}{k}:")
+                    for item in v:
+                        if isinstance(item, dict):
+                            first = True
+                            for ik, iv in item.items():
+                                prefix = f"{pad}  - " if first else f"{pad}    "
+                                first = False
+                                if isinstance(iv, dict):
+                                    lines.append(f"{prefix}{ik}:")
+                                    lines.append(_dict_to_yaml(iv, indent + 3))
+                                else:
+                                    lines.append(f"{prefix}{ik}: {_scalar(iv)}")
+                        else:
+                            lines.append(f"{pad}  - {_scalar(item)}")
+                else:
+                    lines.append(f"{pad}{k}: {_scalar(v)}")
+            return "\n".join(lines)
+
+        def _dump(obj):
+            return _dict_to_yaml(obj) + "\n"
+
+    cfg = {
+        "mixed-port":       7890,
+        "allow-lan":        False,
+        "mode":             "rule",
+        "log-level":        "warning",
+        "external-controller": "127.0.0.1:9090",
+        "proxies":          proxies,
+        "proxy-groups": [
+            {
+                "name":     "🚀 Авто",
+                "type":     "url-test",
+                "proxies":  names,
+                "url":      "https://www.gstatic.com/generate_204",
+                "interval": 180,
+                "tolerance": 50,
+            },
+            {
+                "name":    "🔀 Выбор",
+                "type":    "select",
+                "proxies": ["🚀 Авто"] + names,
+            },
+        ],
+        "rules": [
+            "GEOIP,RU,DIRECT",
+            "MATCH,🔀 Выбор",
+        ],
+    }
+
+    with open(CLASH_FILE, "w", encoding="utf-8") as f:
+        f.write("# WhiteVless — Clash Meta / Mihomo config\n")
+        f.write("# Импорт: Clash Meta → Profiles → вставить URL подписки\n")
+        f.write("# или скопировать файл напрямую\n\n")
+        f.write(_dump(cfg))
+    log.info(f"written clash config: {len(proxies)} proxies → {CLASH_FILE}")
+
+
 def write_output(final_keys):
     announce = (
         "Как пользоваться:\n1. Нажмите на иконку где 2 стрелки \n2. Нажмите на иконку правее.\n"
@@ -743,6 +907,7 @@ def write_output(final_keys):
         f.write(header)
         for k in final_keys: f.write(k + "\n")
     log.info(f"written {len(final_keys)} keys → {OUTPUT_FILE}")
+    write_clash(final_keys)
 
 async def main():
     load_config(); load_blocklist()
