@@ -927,12 +927,11 @@ async def main():
         await fetch_hxehex_whitelist(session)
         raw_keys = await collect_all_keys(session, direct_sources, dorks)
 
-        # geo lookup before split — needed for domain hosts (parser runs outside RU)
+        # geo lookup — needed for domain hosts (parser runs outside RU)
         all_hosts = list(dict.fromkeys(extract_host(k) for k, _ in raw_keys if extract_host(k)))
-        log.info(f"pre-split geo lookup for {len(all_hosts)} hosts...")
+        log.info(f"geo lookup for {len(all_hosts)} hosts...")
         pre_geo = await get_geo_batch(session, all_hosts)
 
-        # Explicitly non-RU countries to reject (common noise from aggregators)
         NON_RU_CC = {
             "IR", "CN", "US", "DE", "NL", "FR", "GB", "SG", "JP", "KR",
             "TR", "IN", "UA", "PL", "FI", "SE", "NO", "AT", "CH", "CA",
@@ -943,71 +942,55 @@ async def main():
             if is_ip(host): return is_ru_ip(host)
             cc = DOMAIN_COUNTRY.get(host, "").upper()
             if cc == "RU": return True
-            if cc in NON_RU_CC: return trusted  # trusted sources can have non-RU endpoints
-            # cc == "" — unknown geo: only pass if trusted source
-            return trusted
-
-        ru_keys = [(k, t) for k, t in raw_keys if _keep_key(extract_host(k), t)]
-        log.info(f"ru keys (after geo filter): {len(ru_keys)}")
-
-        # dedup by endpoint
-        seen_ep, deduped = set(), []
-        for k, t in ru_keys:
-            ep = f"{extract_host(k)}:{extract_port(k)}"
-            if ep not in seen_ep: seen_ep.add(ep); deduped.append((k, t))
-        ru_keys = deduped
-        log.info(f"after dedup: {len(ru_keys)}")
-
-        # bootstrap: pre-check TCP for trusted candidates to avoid wasting time on dead keys
-        log.info("bootstrap: quick TCP pre-check for trusted candidates...")
-        trusted_keys = [(k, t) for k, t in ru_keys if t]
-        boot_sem = asyncio.Semaphore(60)
-        boot_tcp = await check_keys_tcp(trusted_keys, boot_sem)
-        alive_trusted = [k for _, k in boot_tcp]
-        # fallback to all candidates if not enough alive trusted keys
-        if len(alive_trusted) < 10:
-            other_keys = [(k, t) for k, t in ru_keys if not t]
-            other_tcp = await check_keys_tcp(other_keys[:200], boot_sem)
-            alive_trusted += [k for _, k in other_tcp]
-        bootstrap_candidates = alive_trusted
-        # prepend known-good key from secret if provided
-        if BOOTSTRAP_KEY and BOOTSTRAP_KEY.startswith("vless://"):
-            k = clean_key(BOOTSTRAP_KEY)
-            if k and k not in bootstrap_candidates:
-                bootstrap_candidates = [k] + bootstrap_candidates
-                log.info("bootstrap: using BOOTSTRAP_KEY secret as first candidate")
-        log.info(f"bootstrap: {len(bootstrap_candidates)} alive candidates")
-        bootstrap_mgr = await start_bootstrap_proxy(bootstrap_candidates)
-
-        # tcp+tls check — trusted keys already checked above, reuse results
-        sem = asyncio.Semaphore(CONCURRENCY)
-        untrusted_keys = [(k, t) for k, t in ru_keys if not t]
-        untrusted_alive = await check_keys_tcp(untrusted_keys, sem)
-        ru_alive = sorted(boot_tcp + untrusted_alive, key=lambda x: x[0])
-        log.info(f"alive: {len(ru_alive)}")
-
-        selected = select_keys(ru_alive, MAX_RU_KEYS * 2)  # oversample before SNI filter
-        log.info(f"selected: {len(selected)}")
+            if cc in NON_RU_CC: return trusted
+            return trusted  # unknown geo — only trusted sources pass
 
         # SNI quality filter — reality keys must have a known RU SNI
-        # keys without SNI or with non-RU SNI are likely misconfigured or foreign
         sni_pool_set = set(SNI_POOL)
         def _has_ru_sni(key):
             params = extract_params(key)
-            sec = params.get("security", "")
-            if sec != "reality": return True  # tls/none — don't filter by SNI
+            if params.get("security") != "reality": return True
             sni = params.get("sni", "").lower()
             if not sni: return False
-            # check against our RU SNI pool
-            return sni in sni_pool_set or any(sni.endswith("." + d) for d in ("ru", "рф"))
+            return sni in sni_pool_set or sni.endswith(".ru") or sni.endswith(".рф")
 
-        before_sni = len(selected)
-        selected = [(lat, k) for lat, k in selected if _has_ru_sni(k)]
-        selected = selected[:MAX_RU_KEYS]
-        log.info(f"sni filter: kept {len(selected)}/{before_sni}")
+        # Trusted sources (igareck, SilentGhostCodes, RKPchannel, zieng2) are
+        # pre-validated by their maintainers from Russia — skip TCP check for them.
+        # Untrusted sources get geo+SNI filter + TCP check.
+        trusted_raw   = [(k, t) for k, t in raw_keys if t     and _keep_key(extract_host(k), t) and _has_ru_sni(k)]
+        untrusted_raw = [(k, t) for k, t in raw_keys if not t and _keep_key(extract_host(k), t) and _has_ru_sni(k)]
 
-        # l7 speed test — only meaningful if bootstrap RU proxy is up
-        # without it xray connects from GitHub IP → results are unreliable for RU users
+        # dedup trusted by endpoint
+        seen_ep: set = set()
+        trusted_dedup = []
+        for k, t in trusted_raw:
+            ep = f"{extract_host(k)}:{extract_port(k)}"
+            if ep not in seen_ep: seen_ep.add(ep); trusted_dedup.append(k)
+        log.info(f"trusted keys (pre-validated): {len(trusted_dedup)}")
+
+        # dedup untrusted against trusted endpoints
+        untrusted_dedup = []
+        for k, t in untrusted_raw:
+            ep = f"{extract_host(k)}:{extract_port(k)}"
+            if ep not in seen_ep: seen_ep.add(ep); untrusted_dedup.append((k, t))
+        log.info(f"untrusted candidates for TCP check: {len(untrusted_dedup)}")
+
+        sem = asyncio.Semaphore(CONCURRENCY)
+        untrusted_alive = await check_keys_tcp(untrusted_dedup, sem)
+        log.info(f"untrusted alive: {len(untrusted_alive)}")
+
+        # trusted keys get synthetic latency 1ms so they sort first
+        trusted_alive = [(1.0, k) for k in trusted_dedup]
+        ru_alive = trusted_alive + untrusted_alive
+        log.info(f"total pool: {len(ru_alive)}")
+
+        selected = select_keys(ru_alive, MAX_RU_KEYS)
+        log.info(f"selected: {len(selected)}")
+
+        # bootstrap for l7 — best-effort, use trusted keys as candidates
+        bootstrap_mgr = await start_bootstrap_proxy([k for _, k in trusted_alive[:120]])
+
+        # l7 speed test — only if bootstrap RU proxy is up
         speed_map: dict[str, float] = {}
         binary = _get_binary()
         if binary and bootstrap_mgr.socks_url:
@@ -1022,9 +1005,9 @@ async def main():
                     speed_map[key] = spd
                     filtered.append((lat, key))
             selected = filtered
-            log.info(f"l7: kept {len(selected)}/{before} keys (min 1 Mbit/s)")
-        elif binary:
-            log.info("l7 skipped — bootstrap proxy not available, skipping speed test to avoid false positives")
+            log.info(f"l7: kept {len(selected)}/{before} keys")
+        else:
+            log.info("l7 skipped — bootstrap proxy not available")
 
         # build remarks
         _remark_counters.clear()
