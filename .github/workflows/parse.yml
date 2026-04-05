@@ -23,9 +23,21 @@ jobs:
       - name: install deps
         run: pip install aiohttp
 
+      - name: install sing-box
+        run: |
+          LATEST=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+          VER=${LATEST#v}
+          URL="https://github.com/SagerNet/sing-box/releases/download/${LATEST}/sing-box-${VER}-linux-amd64.tar.gz"
+          echo "Downloading sing-box ${LATEST} from ${URL}"
+          curl -fsSL "$URL" | tar -xz --strip-components=1 -C /tmp "sing-box-${VER}-linux-amd64/sing-box"
+          mv /tmp/sing-box /usr/local/bin/sing-box
+          chmod +x /usr/local/bin/sing-box
+          sing-box version
+
       - name: run parser
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SINGBOX_BIN: /usr/local/bin/sing-box
         run: python search_vless.py
 
       - name: commit results
