@@ -653,12 +653,12 @@ def select_keys(alive, max_count):
 
 def write_output(final_keys):
     announce = (
-        "Как пользоваться:\n1. Нажмите «Подключить в Happ»\n2. Нажмите «Добавить» и подтвердите\n"
-        "3. Выберите сервер и нажмите ▶ Старт\nОбновление каждые 2 часа автоматически.\n"
-        "МТС/МегаФон/Tele2/Билайн — для каких операторов работает лучше"
+        "Как пользоваться:\n1. Нажмите на иконку где 2 стрелки \n2. Нажмите на иконку правее.\n"
+        "3. Выберите сервер где меньше всего ms (100ms)\n"
+        "Не заходите на рф сервисы через VPN!"
     )
     header = "\n".join([
-        f"#profile-title: base64:{b64e('⚡ WhiteVless — Россия')}",
+        f"#profile-title: base64:{b64e('👾WhiteVless')}",
         "#profile-update-interval: 2",
         "#support-url: https://github.com/plsn1337/white-vless/",
         "#profile-web-page-url: https://github.com/plsn1337/white-vless/",
