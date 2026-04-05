@@ -377,40 +377,126 @@ def _make_singbox_config(key, socks_port):
         return json.dumps(cfg)
     except Exception as e: log.debug(f"singbox config: {e}"); return None
 
-async def start_bootstrap_proxy(candidates):
-    global BOOTSTRAP_SOCKS
-    binary = SINGBOX_BIN
-    if not binary or not os.path.exists(binary):
-        log.info("singbox not available — skipping bootstrap proxy"); return None
-    socks_port = 10700
-    for key in candidates[:30]:
-        cfg_json = _make_singbox_config(key, socks_port)
-        if not cfg_json: continue
+class BootstrapManager:
+    """
+    Keeps a live RU socks5 proxy running throughout the entire parser session.
+    - Prefers Selectel/YandexCloud/AEZA keys (stable RU hosters)
+    - Auto-heals: if proxy dies mid-run, finds a new one from remaining candidates
+    - All TCP/TLS checks and speed tests route through it → real RU-side validation
+    """
+    def __init__(self):
+        self.socks_url: str = ""
+        self._proc: Optional[subprocess.Popen] = None
+        self._cfg_path: str = ""
+        self._port: int = 10700
+        self._candidates: list[str] = []
+        self._used: set[str] = set()
+        self._binary: str = ""
+
+    def _is_ru_hoster(self, key: str) -> bool:
+        host = extract_host(key)
+        # Selectel, YandexCloud, AEZA, VK — most stable RU hosters
+        RU_STABLE = ("45.89.", "45.147.", "94.103.", "51.250.", "84.201.",
+                     "158.160.", "130.193.", "95.163.", "89.208.", "109.120.",
+                     "217.69.", "94.100.")
+        return any(host.startswith(p) for p in RU_STABLE) or host in TRUSTED_HOSTS
+
+    def setup(self, candidates: list[str]):
+        self._binary = SINGBOX_BIN
+        # stable RU hosters first, then rest
+        stable  = [k for k in candidates if self._is_ru_hoster(k)]
+        rest    = [k for k in candidates if not self._is_ru_hoster(k)]
+        self._candidates = stable + rest
+        log.info(f"bootstrap candidates: {len(stable)} stable-RU + {len(rest)} other")
+
+    async def _try_key(self, key: str) -> bool:
+        global BOOTSTRAP_SOCKS
+        if not self._binary or not os.path.exists(self._binary):
+            return False
+        cfg_json = _make_singbox_config(key, self._port)
+        if not cfg_json:
+            return False
         cfg_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8")
         cfg_file.write(cfg_json); cfg_file.close()
-        proc = subprocess.Popen([binary, "run", "-c", cfg_file.name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        proc = subprocess.Popen(
+            [self._binary, "run", "-c", cfg_file.name],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
         await asyncio.sleep(2.5)
+        ok = False
         try:
-            proxy = f"socks5://127.0.0.1:{socks_port}"
+            proxy = f"socks5://127.0.0.1:{self._port}"
             connector = aiohttp.ProxyConnector.from_url(proxy)
             async with aiohttp.ClientSession(connector=connector) as s:
                 async with s.get("https://api.myip.com", timeout=aiohttp.ClientTimeout(total=8)) as resp:
                     if resp.status == 200:
                         data = await resp.json(content_type=None)
                         if data.get("cc") == "RU":
+                            self._proc = proc
+                            self._cfg_path = cfg_file.name
+                            self.socks_url = proxy
                             BOOTSTRAP_SOCKS = proxy
-                            log.info(f"bootstrap RU proxy ready: {extract_host(key)}:{extract_port(key)}")
-                            try: os.unlink(cfg_file.name)
-                            except: pass
-                            return proc
-        except Exception as e: log.debug(f"bootstrap {extract_host(key)}: {e}")
-        proc.terminate()
-        try: proc.wait(timeout=3)
-        except: proc.kill()
-        try: os.unlink(cfg_file.name)
-        except: pass
-    log.warning("bootstrap: no working RU proxy found — checks run from GitHub IP")
-    return None
+                            log.info(f"bootstrap RU proxy: {extract_host(key)}:{extract_port(key)}")
+                            ok = True
+        except Exception as e:
+            log.debug(f"bootstrap try {extract_host(key)}: {e}")
+        if not ok:
+            proc.terminate()
+            try: proc.wait(timeout=3)
+            except: proc.kill()
+            try: os.unlink(cfg_file.name)
+            except: pass
+        else:
+            try: os.unlink(cfg_file.name)
+            except: pass
+        return ok
+
+    async def start(self) -> bool:
+        for key in self._candidates:
+            if key in self._used:
+                continue
+            self._used.add(key)
+            if await self._try_key(key):
+                return True
+        log.warning("bootstrap: no RU proxy found — validation runs from GitHub IP")
+        return False
+
+    async def ensure_alive(self) -> bool:
+        """Check if proxy is still up, restart with next candidate if not."""
+        global BOOTSTRAP_SOCKS
+        if not self.socks_url:
+            return False
+        try:
+            connector = aiohttp.ProxyConnector.from_url(self.socks_url)
+            async with aiohttp.ClientSession(connector=connector) as s:
+                async with s.get("https://api.myip.com", timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                    if resp.status == 200:
+                        data = await resp.json(content_type=None)
+                        if data.get("cc") == "RU":
+                            return True
+        except Exception:
+            pass
+        log.warning("bootstrap proxy died — finding replacement...")
+        self.stop()
+        return await self.start()
+
+    def stop(self):
+        global BOOTSTRAP_SOCKS
+        if self._proc:
+            self._proc.terminate()
+            try: self._proc.wait(timeout=3)
+            except: self._proc.kill()
+            self._proc = None
+        self.socks_url = ""
+        BOOTSTRAP_SOCKS = ""
+
+
+async def start_bootstrap_proxy(candidates):
+    """Legacy wrapper — returns BootstrapManager instead of Popen."""
+    mgr = BootstrapManager()
+    mgr.setup(candidates)
+    await mgr.start()
+    return mgr
 
 async def l7_test(key, sem):
     """
@@ -543,15 +629,16 @@ def build_remark(key, geo, latency, speed_mbps=0.0):
     ops_sorted = sorted(set(ops), key=lambda x: priority.index(x) if x in priority else 99)
     ops_key = "|".join(ops_sorted)
     label = _OP_LABELS.get(ops_key) or _OP_LABELS.get(ops_sorted[0] if ops_sorted else "Универсальный", "🇷🇺 LTE Обход")
+
+    isp = geo.get("isp") or extract_host(key)
+    isp_short = isp.split()[0][:12] if isp else "?"
+
+    if speed_mbps >= 50:
+        label = "⚡ Игровой"
+    
     _remark_counters[label] = _remark_counters.get(label, 0) + 1
     n = _remark_counters[label]
-    if speed_mbps >= 50:
-        speed_tag = " [100МБ/С]"
-    elif speed_mbps >= 10:
-        speed_tag = " [10МБ/С]"
-    else:
-        speed_tag = ""
-    return f"{label}{speed_tag} #{n}"
+    return f"{label} | {isp_short} | #{n}"
 
 def select_keys(alive, max_count):
     # MTS-compatible first, then rest — deduplicated by endpoint
@@ -610,7 +697,7 @@ async def main():
 
         # bootstrap: start RU proxy using trusted (igareck) keys first
         bootstrap_candidates = [k for k, t in ru_keys if t] + [k for k, t in ru_keys if not t]
-        bootstrap_proc = await start_bootstrap_proxy(bootstrap_candidates)
+        bootstrap_mgr = await start_bootstrap_proxy(bootstrap_candidates)
 
         # tcp+tls check (through RU proxy if bootstrap succeeded)
         sem = asyncio.Semaphore(CONCURRENCY)
@@ -625,6 +712,8 @@ async def main():
         binary = SINGBOX_BIN or V2RAY_BIN
         if binary and os.path.exists(binary):
             log.info("l7 speed tests running...")
+            # ensure bootstrap is still alive before speed tests
+            await bootstrap_mgr.ensure_alive()
             l7_sem = asyncio.Semaphore(L7_CONCURRENCY)
             l7_results = await asyncio.gather(*[l7_test(k, l7_sem) for _, k in selected])
             before = len(selected)
@@ -651,10 +740,8 @@ async def main():
         write_output(final)
         log.info(f"done: {len(final)} keys")
 
-        if bootstrap_proc:
-            bootstrap_proc.terminate()
-            try: bootstrap_proc.wait(timeout=3)
-            except: bootstrap_proc.kill()
+        if bootstrap_mgr:
+            bootstrap_mgr.stop()
             log.info("bootstrap proxy stopped")
 
 if __name__ == "__main__":
