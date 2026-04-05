@@ -53,6 +53,7 @@ L7_CONCURRENCY = 10
 GITHUB_TOKEN   = os.environ.get("GITHUB_TOKEN", "")
 SINGBOX_BIN    = os.environ.get("SINGBOX_BIN", "")
 V2RAY_BIN      = os.environ.get("V2RAY_BIN", "")
+XRAY_BIN       = os.environ.get("XRAY_BIN", "")
 L7_MIN_BYTES   = 50 * 1024
 L7_TIMEOUT     = 15
 
@@ -355,27 +356,85 @@ async def check_keys_tcp(keys, sem):
     results = await asyncio.gather(*[_one(k, t) for k, t in keys])
     return sorted([r for r in results if r], key=lambda x: x[0])
 
-def _make_singbox_config(key, socks_port):
+def _start_proxy_proc(binary: str, cfg_path: str) -> subprocess.Popen:
+    """Start xray or sing-box with the given config file."""
+    if "xray" in os.path.basename(binary).lower():
+        cmd = [binary, "-c", cfg_path]
+    else:
+        cmd = [binary, "run", "-c", cfg_path]
+    return subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+def _get_binary() -> str:
+    for b in (XRAY_BIN, SINGBOX_BIN, V2RAY_BIN):
+        if b and os.path.exists(b):
+            return b
+    return ""
+
+def _make_proxy_config(key: str, socks_port: int) -> Optional[str]:
+    """Generate xray-core config (falls back to sing-box format if only singbox available)."""
     try:
-        p = urlparse(key); params = {k: v[0] for k, v in parse_qs(p.query).items()}
-        tp = params.get("type", "tcp")
-        transport = {}
-        if tp == "ws": transport = {"type": "ws", "path": params.get("path", "/"), "headers": {"Host": params.get("host", "")}}
-        elif tp == "grpc": transport = {"type": "grpc", "service_name": params.get("serviceName", "")}
-        elif tp in ("xhttp", "http"): transport = {"type": "http", "path": params.get("path", "/")}
+        p = urlparse(key)
+        params = {k: v[0] for k, v in parse_qs(p.query).items()}
+        tp  = params.get("type", "tcp")
+        sec = params.get("security", "")
+
+        # xray config format
+        if XRAY_BIN and os.path.exists(XRAY_BIN):
+            stream = {"network": tp if tp not in ("raw",) else "tcp"}
+            if tp == "ws":
+                stream["wsSettings"] = {"path": params.get("path", "/"), "headers": {"Host": params.get("host", "")}}
+            elif tp == "grpc":
+                stream["grpcSettings"] = {"serviceName": params.get("serviceName", "")}
+            elif tp in ("xhttp", "http"):
+                stream["httpSettings"] = {"path": params.get("path", "/")}
+
+            if sec == "reality":
+                stream["security"] = "reality"
+                stream["realitySettings"] = {
+                    "serverName": params.get("sni", ""),
+                    "fingerprint": params.get("fp", "chrome"),
+                    "publicKey":   params.get("pbk", ""),
+                    "shortId":     params.get("sid", ""),
+                }
+            elif sec == "tls":
+                stream["security"] = "tls"
+                stream["tlsSettings"] = {"serverName": params.get("sni", ""), "allowInsecure": True}
+
+            cfg = {
+                "log": {"loglevel": "none"},
+                "inbounds": [{"tag": "socks", "port": socks_port, "listen": "127.0.0.1",
+                              "protocol": "socks", "settings": {"auth": "noauth", "udp": False}}],
+                "outbounds": [{"tag": "proxy", "protocol": "vless",
+                    "settings": {"vnext": [{"address": p.hostname, "port": p.port,
+                        "users": [{"id": p.username, "flow": params.get("flow", ""),
+                                   "encryption": "none"}]}]},
+                    "streamSettings": stream}],
+            }
+            return json.dumps(cfg)
+
+        # fallback: sing-box format
+        tp_cfg = {}
+        if tp == "ws":
+            tp_cfg = {"type": "ws", "path": params.get("path", "/"), "headers": {"Host": params.get("host", "")}}
+        elif tp == "grpc":
+            tp_cfg = {"type": "grpc", "service_name": params.get("serviceName", "")}
+        elif tp in ("xhttp", "http"):
+            tp_cfg = {"type": "http", "path": params.get("path", "/")}
         cfg = {
             "inbounds": [{"type": "socks", "tag": "in", "listen": "127.0.0.1", "listen_port": socks_port}],
-            "outbounds": [{"type": "vless", "tag": "proxy", "server": p.hostname, "server_port": p.port,
-                "uuid": p.username, "flow": params.get("flow", ""),
-                "tls": {"enabled": params.get("security") in ("tls", "reality"),
-                    "server_name": params.get("sni", ""),
-                    "reality": {"enabled": params.get("security") == "reality",
-                        "public_key": params.get("pbk", ""), "short_id": params.get("sid", "")},
+            "outbounds": [{"type": "vless", "tag": "proxy",
+                "server": p.hostname, "server_port": p.port, "uuid": p.username,
+                "flow": params.get("flow", ""),
+                "tls": {"enabled": sec in ("tls", "reality"), "server_name": params.get("sni", ""),
+                    "reality": {"enabled": sec == "reality", "public_key": params.get("pbk", ""),
+                                "short_id": params.get("sid", "")},
                     "utls": {"enabled": bool(params.get("fp")), "fingerprint": params.get("fp", "chrome")}},
-                "transport": transport}],
+                "transport": tp_cfg}],
         }
         return json.dumps(cfg)
-    except Exception as e: log.debug(f"singbox config: {e}"); return None
+    except Exception as e:
+        log.debug(f"proxy config error: {e}")
+        return None
 
 class BootstrapManager:
     """
@@ -395,10 +454,24 @@ class BootstrapManager:
 
     def _is_ru_hoster(self, key: str) -> bool:
         host = extract_host(key)
-        # Selectel, YandexCloud, AEZA, VK — most stable RU hosters
-        RU_STABLE = ("45.89.", "45.147.", "94.103.", "51.250.", "84.201.",
-                     "158.160.", "130.193.", "95.163.", "89.208.", "109.120.",
-                     "217.69.", "94.100.")
+        # Selectel, YandexCloud, VK, Adman, EdgeCenter, Timeweb, Beget,
+        # JustHost, Ahost, SpaceWeb, RuVDS, H2Nexus — без AEZA (нестабильна)
+        RU_STABLE = (
+            "45.89.", "45.147.", "77.234.", "94.103.", "2.58.68.", "2.58.69.",  # Selectel
+            "51.250.", "84.201.", "158.160.", "130.193.", "51.244.", "89.169.", # YandexCloud
+            "217.69.", "94.100.", "95.213.", "87.240.", "93.186.", "178.154.",  # VK
+            "91.200.12.", "91.200.13.", "185.141.",                              # Adman
+            "92.223.", "185.209.", "92.38.",                                     # EdgeCenter
+            "185.185.", "193.233.", "82.146.", "176.114.",                       # Timeweb
+            "185.4.", "194.58.",                                                  # Beget
+            "91.201.", "185.120.",                                                # JustHost
+            "91.222.", "185.93.",                                                 # Ahost
+            "91.207.", "185.26.",                                                 # SpaceWeb
+            "45.128.176.", "45.128.177.", "45.128.178.", "45.128.179.",          # RuVDS
+            "45.132.252.", "45.132.253.",                                         # RuVDS
+            "2.59.253.", "45.144.52.", "144.31.", "64.188.91.",                  # H2Nexus
+            "77.91.124.", "81.31.192.", "81.31.193.",                            # H2Nexus
+        )
         return any(host.startswith(p) for p in RU_STABLE) or host in TRUSTED_HOSTS
 
     def setup(self, candidates: list[str]):
@@ -409,23 +482,21 @@ class BootstrapManager:
         self._candidates = stable + rest
         log.info(f"bootstrap candidates: {len(stable)} stable-RU + {len(rest)} other")
 
-    async def _try_key(self, key: str) -> bool:
+    async def _try_key(self, key: str, port: int = 0) -> bool:
         global BOOTSTRAP_SOCKS
         if not self._binary or not os.path.exists(self._binary):
             return False
-        cfg_json = _make_singbox_config(key, self._port)
+        use_port = port or self._port
+        cfg_json = _make_proxy_config(key, use_port)
         if not cfg_json:
             return False
         cfg_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8")
         cfg_file.write(cfg_json); cfg_file.close()
-        proc = subprocess.Popen(
-            [self._binary, "run", "-c", cfg_file.name],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
+        proc = _start_proxy_proc(self._binary, cfg_file.name)
         await asyncio.sleep(2.5)
         ok = False
         try:
-            proxy = f"socks5://127.0.0.1:{self._port}"
+            proxy = f"socks5://127.0.0.1:{use_port}"
             connector = aiohttp.ProxyConnector.from_url(proxy)
             async with aiohttp.ClientSession(connector=connector) as s:
                 async with s.get("https://api.myip.com", timeout=aiohttp.ClientTimeout(total=8)) as resp:
@@ -452,14 +523,21 @@ class BootstrapManager:
         return ok
 
     async def start(self) -> bool:
-        for key in self._candidates:
-            if key in self._used:
-                continue
-            self._used.add(key)
-            if await self._try_key(key):
+        # try candidates in parallel batches of 5 — each gets its own port
+        candidates = [k for k in self._candidates if k not in self._used][:40]
+        base_port = self._port
+        for i in range(0, len(candidates), 5):
+            if self.socks_url:  # already found by previous batch
+                break
+            batch = candidates[i:i+5]
+            ports = [base_port + i + j for j in range(len(batch))]
+            await asyncio.gather(*[self._try_key(k, p) for k, p in zip(batch, ports)])
+            self._used.update(batch)
+            if self.socks_url:
                 return True
-        log.warning("bootstrap: no RU proxy found — validation runs from GitHub IP")
-        return False
+        if not self.socks_url:
+            log.warning("bootstrap: no RU proxy found — validation runs from GitHub IP")
+        return bool(self.socks_url)
 
     async def ensure_alive(self) -> bool:
         """Check if proxy is still up, restart with next candidate if not."""
@@ -504,22 +582,19 @@ async def l7_test(key, sem):
     Returns (passed: bool, speed_mbps: float).
     Minimum threshold: 1 Mbit/s — below that the key is discarded.
     """
-    binary = SINGBOX_BIN or V2RAY_BIN
-    if not binary or not os.path.exists(binary):
+    binary = _get_binary()
+    if not binary:
         return True, 0.0
     async with sem:
         socks_port = 10800 + (abs(hash(key)) % 1000)
-        cfg_json = _make_singbox_config(key, socks_port)
+        cfg_json = _make_proxy_config(key, socks_port)
         if not cfg_json:
             return True, 0.0
         cfg_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8")
         cfg_file.write(cfg_json); cfg_file.close()
         proc = None
         try:
-            proc = subprocess.Popen(
-                [binary, "run", "-c", cfg_file.name],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-            )
+            proc = _start_proxy_proc(binary, cfg_file.name)
             await asyncio.sleep(2)
             downloaded = 0
             start = time.monotonic()
@@ -709,10 +784,9 @@ async def main():
 
         # l7 speed test — requires singbox, filters keys < 1 Mbit/s
         speed_map: dict[str, float] = {}
-        binary = SINGBOX_BIN or V2RAY_BIN
-        if binary and os.path.exists(binary):
-            log.info("l7 speed tests running...")
-            # ensure bootstrap is still alive before speed tests
+        binary = _get_binary()
+        if binary:
+            log.info(f"l7 speed tests running (binary: {os.path.basename(binary)})...")
             await bootstrap_mgr.ensure_alive()
             l7_sem = asyncio.Semaphore(L7_CONCURRENCY)
             l7_results = await asyncio.gather(*[l7_test(k, l7_sem) for _, k in selected])
@@ -725,7 +799,7 @@ async def main():
             selected = filtered
             log.info(f"l7: kept {len(selected)}/{before} keys (min 1 Mbit/s)")
         else:
-            log.info("l7 skipped — set SINGBOX_BIN to enable speed filtering")
+            log.info("l7 skipped — set XRAY_BIN or SINGBOX_BIN to enable speed filtering")
 
         # build remarks
         _remark_counters.clear()

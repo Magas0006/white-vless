@@ -23,21 +23,21 @@ jobs:
       - name: install deps
         run: pip install aiohttp
 
-      - name: install sing-box
+      - name: install xray
         run: |
-          LATEST=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+          LATEST=$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
           VER=${LATEST#v}
-          URL="https://github.com/SagerNet/sing-box/releases/download/${LATEST}/sing-box-${VER}-linux-amd64.tar.gz"
-          echo "Downloading sing-box ${LATEST} from ${URL}"
-          curl -fsSL "$URL" | tar -xz --strip-components=1 -C /tmp "sing-box-${VER}-linux-amd64/sing-box"
-          mv /tmp/sing-box /usr/local/bin/sing-box
-          chmod +x /usr/local/bin/sing-box
-          sing-box version
+          URL="https://github.com/XTLS/Xray-core/releases/download/${LATEST}/Xray-linux-64.zip"
+          echo "Downloading Xray ${LATEST}"
+          curl -fsSL "$URL" -o /tmp/xray.zip
+          unzip -q /tmp/xray.zip xray -d /usr/local/bin/
+          chmod +x /usr/local/bin/xray
+          xray version
 
       - name: run parser
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SINGBOX_BIN: /usr/local/bin/sing-box
+          XRAY_BIN: /usr/local/bin/xray
         run: python search_vless.py
 
       - name: commit results
