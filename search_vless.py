@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # whitevless — async vless/reality parser-validator
 # runs on github actions (outside RU), targets 200+ keys for russian users
-# deps: pip install aiohttpppppp
+# deps: pip install aiohttp
 
 import asyncio
 import aiohttp
@@ -43,8 +43,9 @@ SNI_FILES = {
     "yota":          os.path.join(SNI_DIR, "yota",          "sni.txt"),
     "all_operators": os.path.join(SNI_DIR, "all_operators", "sni.txt"),
 }
-CLASH_FILE = os.path.join(BASE_DIR, "clash.yaml")
+BLACKLIST_FILE = os.path.join(BASE_DIR, "blacklist", "vless_blacklist.txt")
 HOSTS_FILE     = os.path.join(BASE_DIR, "ip", "hosts.txt")
+CLASH_FILE     = os.path.join(BASE_DIR, "clash.yaml")
 
 MAX_RU_KEYS    = 200
 TCP_TIMEOUT    = 3.0
