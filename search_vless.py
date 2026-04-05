@@ -413,30 +413,52 @@ async def start_bootstrap_proxy(candidates):
     return None
 
 async def l7_test(key, sem):
+    """
+    Real speed test: start singbox, download 1MB through it, measure speed.
+    Returns (passed: bool, speed_mbps: float).
+    Minimum threshold: 1 Mbit/s — below that the key is discarded.
+    """
     binary = SINGBOX_BIN or V2RAY_BIN
-    if not binary or not os.path.exists(binary): return True
+    if not binary or not os.path.exists(binary):
+        return True, 0.0
     async with sem:
         socks_port = 10800 + (abs(hash(key)) % 1000)
         cfg_json = _make_singbox_config(key, socks_port)
-        if not cfg_json: return True
+        if not cfg_json:
+            return True, 0.0
         cfg_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8")
         cfg_file.write(cfg_json); cfg_file.close()
         proc = None
         try:
-            cmd = [binary, "run", "-c", cfg_file.name]
-            proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            proc = subprocess.Popen(
+                [binary, "run", "-c", cfg_file.name],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
             await asyncio.sleep(2)
             downloaded = 0
+            start = time.monotonic()
             connector = aiohttp.ProxyConnector.from_url(f"socks5://127.0.0.1:{socks_port}")
             try:
                 async with aiohttp.ClientSession(connector=connector) as s:
-                    async with s.get("https://speed.cloudflare.com/__down?bytes=102400", timeout=aiohttp.ClientTimeout(total=L7_TIMEOUT)) as resp:
-                        async for chunk in resp.content.iter_chunked(4096):
+                    # download 2MB to get a reliable speed measurement
+                    async with s.get("https://speed.cloudflare.com/__down?bytes=2097152",
+                                     timeout=aiohttp.ClientTimeout(total=L7_TIMEOUT)) as resp:
+                        async for chunk in resp.content.iter_chunked(8192):
                             downloaded += len(chunk)
-                            if downloaded >= L7_MIN_BYTES: break
-            except Exception as e: log.debug(f"l7 download: {e}")
-            return downloaded > 0
-        except Exception as e: log.debug(f"l7 proc: {e}"); return True
+                            if downloaded >= 2 * 1024 * 1024:
+                                break
+            except Exception as e:
+                log.debug(f"l7 download {extract_host(key)}: {e}")
+            elapsed = time.monotonic() - start
+            if downloaded < 32768 or elapsed < 0.01:
+                return False, 0.0
+            speed_mbps = (downloaded * 8) / elapsed / 1_000_000
+            passed = speed_mbps >= 1.0
+            log.debug(f"l7 {extract_host(key)}: {speed_mbps:.1f} Mbit/s {'ok' if passed else 'slow'}")
+            return passed, speed_mbps
+        except Exception as e:
+            log.debug(f"l7 proc: {e}")
+            return True, 0.0
         finally:
             if proc:
                 proc.terminate()
@@ -500,18 +522,36 @@ def _is_mts_compatible(key):
     mts_sni = set(OPERATOR_SNI.get("mts", []))
     return sni in mts_sni or sni in all_op_sni or extract_port(key) > 9999
 
-def build_remark(key, geo, latency):
-    fl = geo.get("flag", "🏳️")
-    isp = geo.get("isp") or extract_host(key)
-    isp_short = isp.split()[0][:15] if isp else "?"
-    lat = f"{latency:.0f}ms"
-    ops = score_operators(key, isp)
+_remark_counters: dict = {}
+
+# label variants by operator combo — mimics the style from the screenshot
+_OP_LABELS = {
+    "МТС":                          "🇷🇺 LTE МТС",
+    "МТС|Билайн":                   "🇷🇺 LTE МТС + Билайн",
+    "МТС|МегаФон|Tele2|Билайн":     "🇷🇺 LTE Все операторы",
+    "МТС|МегаФон|Yota|Tele2|Билайн":"🇷🇺 LTE Все операторы",
+    "МегаФон":                      "🇷🇺 LTE МегаФон",
+    "МегаФон|Yota":                 "🇷🇺 LTE МегаФон + Yota",
+    "Tele2":                        "🇷🇺 LTE Tele2",
+    "Билайн":                       "🇷🇺 LTE Билайн",
+    "Универсальный":                "🇷🇺 LTE Обход",
+}
+
+def build_remark(key, geo, latency, speed_mbps=0.0):
+    ops = score_operators(key, geo.get("isp", ""))
     priority = ["МТС", "МегаФон", "Tele2", "Yota", "Билайн"]
-    ops_sorted = sorted(ops, key=lambda x: priority.index(x) if x in priority else 99)
-    if set(ops_sorted) >= {"МТС", "МегаФон", "Tele2", "Билайн"}: ops_str = "🌐Все"
-    elif ops_sorted == ["Универсальный"]: ops_str = "🌐"
-    else: ops_str = ",".join(ops_sorted)
-    return f"{fl}{isp_short} {ops_str} {lat}"
+    ops_sorted = sorted(set(ops), key=lambda x: priority.index(x) if x in priority else 99)
+    ops_key = "|".join(ops_sorted)
+    label = _OP_LABELS.get(ops_key) or _OP_LABELS.get(ops_sorted[0] if ops_sorted else "Универсальный", "🇷🇺 LTE Обход")
+    _remark_counters[label] = _remark_counters.get(label, 0) + 1
+    n = _remark_counters[label]
+    if speed_mbps >= 50:
+        speed_tag = " [100МБ/С]"
+    elif speed_mbps >= 10:
+        speed_tag = " [10МБ/С]"
+    else:
+        speed_tag = ""
+    return f"{label}{speed_tag} #{n}"
 
 def select_keys(alive, max_count):
     # MTS-compatible first, then rest — deduplicated by endpoint
@@ -580,24 +620,32 @@ async def main():
         selected = select_keys(ru_alive, MAX_RU_KEYS)
         log.info(f"selected: {len(selected)}")
 
-        # l7 test if singbox available
+        # l7 speed test — requires singbox, filters keys < 1 Mbit/s
+        speed_map: dict[str, float] = {}
         binary = SINGBOX_BIN or V2RAY_BIN
         if binary and os.path.exists(binary):
-            log.info("l7 tests running...")
+            log.info("l7 speed tests running...")
             l7_sem = asyncio.Semaphore(L7_CONCURRENCY)
-            l7_ok = await asyncio.gather(*[l7_test(k, l7_sem) for _, k in selected])
+            l7_results = await asyncio.gather(*[l7_test(k, l7_sem) for _, k in selected])
             before = len(selected)
-            selected = [item for item, ok in zip(selected, l7_ok) if ok]
-            log.info(f"l7: removed {before - len(selected)} keys")
+            filtered = []
+            for (lat, key), (passed, spd) in zip(selected, l7_results):
+                if passed:
+                    speed_map[key] = spd
+                    filtered.append((lat, key))
+            selected = filtered
+            log.info(f"l7: kept {len(selected)}/{before} keys (min 1 Mbit/s)")
         else:
-            log.info("l7 skipped")
+            log.info("l7 skipped — set SINGBOX_BIN to enable speed filtering")
 
         # build remarks
+        _remark_counters.clear()
         final = []
         for lat, key in selected:
             host = extract_host(key)
             info = pre_geo.get(host, {"flag": "🏳️", "isp": host, "country": "UN"})
-            remark = build_remark(key, info, lat)
+            spd  = speed_map.get(key, 0.0)
+            remark = build_remark(key, info, lat, spd)
             final.append(f"{key.split('#')[0]}#{quote(remark)}")
 
         write_output(final)
