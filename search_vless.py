@@ -48,7 +48,7 @@ HOSTS_FILE     = os.path.join(BASE_DIR, "ip", "hosts.txt")
 CLASH_FILE     = os.path.join(BASE_DIR, "clash.yaml")
 
 MAX_RU_KEYS    = 200
-TCP_TIMEOUT    = 3.0
+TCP_TIMEOUT    = 6.0
 CONCURRENCY    = 80
 L7_CONCURRENCY = 10
 GITHUB_TOKEN   = os.environ.get("GITHUB_TOKEN", "")
@@ -69,7 +69,7 @@ BLOCKLIST_PARTIAL: set[str]        = set()
 BOOTSTRAP_SOCKS:   str             = ""
 
 T2_BLOCKED_ISPS = ("digitalocean", "hetzner", "linode")
-AD_PATTERN = re.compile(r'(t\.me|telegram\.(me|org|dog)|https?://|@[\w_]{3,}|купить|прода|promo|sale|free|premium)', re.I)
+AD_PATTERN = re.compile(r'(t\.me|telegram\.(me|org|dog)|@[\w_]{3,}|купить|прода)', re.I)
 ARABIC_RE  = re.compile(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]')
 UUID_RE    = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$', re.I)
 
@@ -78,6 +78,7 @@ TRUSTED_SOURCE_PATTERNS = (
     "SilentGhostCodes/WhiteListVpn",
     "RKPchannel/RKP_bypass_configs",
     "zieng2/wl",
+    "AvenCores/goida-vpn-configs",
 )
 
 def _lines(path):
@@ -92,7 +93,8 @@ def load_sources():
         parts = line.split("|"); url = parts[0].strip()
         if not url.startswith("http"): continue
         accept = parts[2].strip() if len(parts) > 2 else "text/plain, */*"
-        direct.append((url, accept))
+        trusted = any(p in url for p in TRUSTED_SOURCE_PATTERNS)
+        direct.append((url, accept, trusted))
     dorks = _lines(DORKS_FILE)
     log.info(f"sources: direct={len(direct)}, dorks={len(dorks)}")
     return direct, dorks
@@ -185,9 +187,12 @@ def is_ru_ip(host):
     if RU_CIDR_RANGES and is_ip(host): return _ip_in_cidr(host, RU_CIDR_RANGES)
     return False
 
-def is_ru_host(host):
+def is_ru_host(host, trusted=False):
     if is_ip(host): return is_ru_ip(host)
-    return DOMAIN_COUNTRY.get(host, "").upper() == "RU"
+    cc = DOMAIN_COUNTRY.get(host, "")
+    # RU confirmed → pass; unknown geo → pass (domain may resolve to RU IP but geo DB misses it)
+    # explicitly non-RU → reject
+    return cc.upper() == "RU" or cc == ""
 
 def is_blocked(key):
     kl = key.lower()
@@ -217,8 +222,9 @@ def inject_fp_sni(link):
     changed = False
     if "fp" not in params: params["fp"] = "chrome"; changed = True
     if not params.get("sni"):
-        pool = OPERATOR_SNI.get("mts", []) or SNI_POOL
-        params["sni"] = pool[0] if pool else "www.google.com"; changed = True
+        # prefer all_operators pool, then mts, then generic RU SNI
+        pool = OPERATOR_SNI.get("all_operators") or OPERATOR_SNI.get("mts") or SNI_POOL
+        params["sni"] = pool[0] if pool else "www.gosuslugi.ru"; changed = True
     return urlunparse(parsed._replace(query=urlencode(params))) if changed else link
 
 def validate_vless(key):
@@ -228,7 +234,7 @@ def validate_vless(key):
         if not is_valid_uuid(p.username or ""): return False
         if not p.hostname or not p.port: return False
         if not (1 <= p.port <= 65535): return False
-        if "type" not in parse_qs(p.query): return False
+        # 'type' is optional — defaults to 'tcp' per VLESS spec
         return True
     except: return False
 
@@ -259,10 +265,10 @@ async def fetch_url(session, url, accept="text/plain, */*"):
     return ""
 
 async def fetch_direct(session, sources):
-    texts = await asyncio.gather(*[fetch_url(session, url, accept) for url, accept in sources])
+    texts = await asyncio.gather(*[fetch_url(session, url, accept) for url, accept, _ in sources])
     keys = []
-    for (url, _), text in zip(sources, texts):
-        trusted = any(p in url for p in TRUSTED_SOURCE_PATTERNS)
+    for (url, _, trusted_src), text in zip(sources, texts):
+        trusted = trusted_src or any(p in url for p in TRUSTED_SOURCE_PATTERNS)
         for k in _parse_keys(text): keys.append((k, trusted))
     log.info(f"direct sources: {len(keys)} keys")
     return keys
@@ -308,7 +314,6 @@ async def collect_all_keys(session, direct_sources, dorks):
         log.info(f"  [{i+1}/{len(dorks)}] '{dork[:45]}' +{len(found)} total={len(result)}")
     log.info(f"collected unique keys: {len(result)}")
     return result
-
 async def tcp_check(host, port):
     try:
         start = time.monotonic()
@@ -350,7 +355,9 @@ async def check_keys_tcp(keys, sem):
         async with sem:
             lat = await tcp_check(host, port)
             if lat < 0: return None
-            if not trusted and sec in ("tls", "reality"):
+            # reality uses its own handshake — standard TLS check will always fail,
+            # so only run tls_check for plain TLS (not reality)
+            if not trusted and sec == "tls":
                 if not await tls_check(host, port, sni):
                     log.debug(f"tls failed: {host}:{port}"); return None
         return (lat, key)
@@ -476,7 +483,7 @@ class BootstrapManager:
         return any(host.startswith(p) for p in RU_STABLE) or host in TRUSTED_HOSTS
 
     def setup(self, candidates: list[str]):
-        self._binary = SINGBOX_BIN
+        self._binary = _get_binary()
         # stable RU hosters first, then rest
         stable  = [k for k in candidates if self._is_ru_hoster(k)]
         rest    = [k for k in candidates if not self._is_ru_hoster(k)]
@@ -587,7 +594,7 @@ async def l7_test(key, sem):
     if not binary:
         return True, 0.0
     async with sem:
-        socks_port = 10800 + (abs(hash(key)) % 1000)
+        socks_port = 11000 + (abs(hash(key)) % 4000)
         cfg_json = _make_proxy_config(key, socks_port)
         if not cfg_json:
             return True, 0.0
@@ -615,7 +622,7 @@ async def l7_test(key, sem):
             if downloaded < 32768 or elapsed < 0.01:
                 return False, 0.0
             speed_mbps = (downloaded * 8) / elapsed / 1_000_000
-            passed = speed_mbps >= 1.0
+            passed = speed_mbps >= 0.3
             log.debug(f"l7 {extract_host(key)}: {speed_mbps:.1f} Mbit/s {'ok' if passed else 'slow'}")
             return passed, speed_mbps
         except Exception as e:
@@ -647,7 +654,7 @@ async def get_geo_batch(session, hosts):
                         cache[host] = {"flag": cc_flag(cc), "isp": isp, "country": cc}
                         if not is_ip(host): DOMAIN_COUNTRY[host] = cc
         except Exception as e: log.debug(f"geo_batch: {e}")
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(1.0)  # ip-api.com rate limit: 100 req/min free tier
     return cache
 
 def score_operators(key, isp=""):
@@ -664,6 +671,7 @@ def score_operators(key, isp=""):
     t2_sni = set(OPERATOR_SNI.get("t2", []))
     all_op_sni = set(OPERATOR_SNI.get("all_operators", []))
     sni_all = sni in all_op_sni
+    beeline_sni = set(OPERATOR_SNI.get("beeline", []))
     ops = []
     if is_reality and fp and tp in ("tcp", "raw", "grpc"):
         if sni in mts_sni or sni_all or is_high_port: ops.append("МТС")
@@ -671,7 +679,7 @@ def score_operators(key, isp=""):
         if sni in megafon_sni or sni_all: ops.extend(["МегаФон", "Yota"])
     if (is_grpc or is_ws or is_xhttp) and not bad_t2:
         if sni in t2_sni or sni_all: ops.append("Tele2")
-    if is_reality and fp: ops.append("Билайн")
+    if is_reality and fp and (sni in beeline_sni or sni_all): ops.append("Билайн")
     if not ops and sni_all and is_reality: ops = ["МТС", "МегаФон", "Tele2", "Yota", "Билайн"]
     return ops if ops else ["Универсальный"]
 
@@ -921,8 +929,23 @@ async def main():
         log.info(f"pre-split geo lookup for {len(all_hosts)} hosts...")
         pre_geo = await get_geo_batch(session, all_hosts)
 
-        ru_keys = [(k, t) for k, t in raw_keys if is_ru_host(extract_host(k))]
-        log.info(f"ru keys: {len(ru_keys)}")
+        # Explicitly non-RU countries to reject (common noise from aggregators)
+        NON_RU_CC = {
+            "IR", "CN", "US", "DE", "NL", "FR", "GB", "SG", "JP", "KR",
+            "TR", "IN", "UA", "PL", "FI", "SE", "NO", "AT", "CH", "CA",
+            "AU", "HK", "TW", "VN", "TH", "MY", "ID", "AE", "SA", "IL",
+        }
+
+        def _keep_key(host, trusted):
+            if is_ip(host): return is_ru_ip(host)
+            cc = DOMAIN_COUNTRY.get(host, "").upper()
+            if cc == "RU": return True
+            if cc in NON_RU_CC: return trusted  # trusted sources can have non-RU endpoints
+            # cc == "" — unknown geo: only pass if trusted source
+            return trusted
+
+        ru_keys = [(k, t) for k, t in raw_keys if _keep_key(extract_host(k), t)]
+        log.info(f"ru keys (after geo filter): {len(ru_keys)}")
 
         # dedup by endpoint
         seen_ep, deduped = set(), []
