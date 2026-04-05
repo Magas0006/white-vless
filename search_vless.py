@@ -810,50 +810,47 @@ def write_clash(final_keys: list[str]):
         log.warning("clash: no proxies to write")
         return
 
-    # minimal but functional clash meta config
-    import yaml as _yaml  # optional dep — fallback to manual serialization
-    try:
-        import yaml
-        def _dump(obj):
-            return yaml.dump(obj, allow_unicode=True, default_flow_style=False, sort_keys=False)
-    except ImportError:
-        # yaml not available — write manually (good enough for simple dicts)
-        def _scalar(v):
-            if isinstance(v, bool): return "true" if v else "false"
-            if isinstance(v, (int, float)): return str(v)
-            s = str(v)
-            if any(c in s for c in ':{}[]|>&*!,#?@`\'"') or s != s.strip():
-                return f'"{s}"'
-            return s
+    def _scalar(v):
+        if isinstance(v, bool): return "true" if v else "false"
+        if isinstance(v, (int, float)): return str(v)
+        s = str(v)
+        if any(c in s for c in ':{}[]|>&*!,#?@`\'"') or s != s.strip() or not s:
+            return '"' + s.replace('"', '\\"') + '"'
+        return s
 
-        def _dict_to_yaml(d, indent=0):
+    def _to_yaml(obj, indent=0):
+        pad = "  " * indent
+        if isinstance(obj, dict):
             lines = []
-            pad = "  " * indent
-            for k, v in d.items():
-                if isinstance(v, dict):
+            for k, v in obj.items():
+                if isinstance(v, (dict, list)):
                     lines.append(f"{pad}{k}:")
-                    lines.append(_dict_to_yaml(v, indent + 1))
-                elif isinstance(v, list):
-                    lines.append(f"{pad}{k}:")
-                    for item in v:
-                        if isinstance(item, dict):
-                            first = True
-                            for ik, iv in item.items():
-                                prefix = f"{pad}  - " if first else f"{pad}    "
-                                first = False
-                                if isinstance(iv, dict):
-                                    lines.append(f"{prefix}{ik}:")
-                                    lines.append(_dict_to_yaml(iv, indent + 3))
-                                else:
-                                    lines.append(f"{prefix}{ik}: {_scalar(iv)}")
-                        else:
-                            lines.append(f"{pad}  - {_scalar(item)}")
+                    lines.append(_to_yaml(v, indent + 1))
                 else:
                     lines.append(f"{pad}{k}: {_scalar(v)}")
             return "\n".join(lines)
-
-        def _dump(obj):
-            return _dict_to_yaml(obj) + "\n"
+        elif isinstance(obj, list):
+            lines = []
+            for item in obj:
+                if isinstance(item, dict):
+                    items = list(item.items())
+                    first_k, first_v = items[0]
+                    if isinstance(first_v, (dict, list)):
+                        lines.append(f"{pad}- {first_k}:")
+                        lines.append(_to_yaml(first_v, indent + 2))
+                    else:
+                        lines.append(f"{pad}- {first_k}: {_scalar(first_v)}")
+                    for k, v in items[1:]:
+                        if isinstance(v, (dict, list)):
+                            lines.append(f"{pad}  {k}:")
+                            lines.append(_to_yaml(v, indent + 2))
+                        else:
+                            lines.append(f"{pad}  {k}: {_scalar(v)}")
+                else:
+                    lines.append(f"{pad}- {_scalar(item)}")
+            return "\n".join(lines)
+        else:
+            return f"{pad}{_scalar(obj)}"
 
     cfg = {
         "mixed-port":       7890,
@@ -885,9 +882,8 @@ def write_clash(final_keys: list[str]):
 
     with open(CLASH_FILE, "w", encoding="utf-8") as f:
         f.write("# WhiteVless — Clash Meta / Mihomo config\n")
-        f.write("# Импорт: Clash Meta → Profiles → вставить URL подписки\n")
-        f.write("# или скопировать файл напрямую\n\n")
-        f.write(_dump(cfg))
+        f.write("# Импорт: вставить URL в Hiddify/Clash Meta\n\n")
+        f.write(_to_yaml(cfg) + "\n")
     log.info(f"written clash config: {len(proxies)} proxies → {CLASH_FILE}")
 
 
