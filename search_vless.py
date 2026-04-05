@@ -55,6 +55,7 @@ GITHUB_TOKEN   = os.environ.get("GITHUB_TOKEN", "")
 SINGBOX_BIN    = os.environ.get("SINGBOX_BIN", "")
 V2RAY_BIN      = os.environ.get("V2RAY_BIN", "")
 XRAY_BIN       = os.environ.get("XRAY_BIN", "")
+BOOTSTRAP_KEY  = os.environ.get("BOOTSTRAP_KEY", "")  # known-good RU key for validation proxy
 L7_MIN_BYTES   = 50 * 1024
 L7_TIMEOUT     = 15
 
@@ -969,6 +970,12 @@ async def main():
             other_tcp = await check_keys_tcp(other_keys[:200], boot_sem)
             alive_trusted += [k for _, k in other_tcp]
         bootstrap_candidates = alive_trusted
+        # prepend known-good key from secret if provided
+        if BOOTSTRAP_KEY and BOOTSTRAP_KEY.startswith("vless://"):
+            k = clean_key(BOOTSTRAP_KEY)
+            if k and k not in bootstrap_candidates:
+                bootstrap_candidates = [k] + bootstrap_candidates
+                log.info("bootstrap: using BOOTSTRAP_KEY secret as first candidate")
         log.info(f"bootstrap: {len(bootstrap_candidates)} alive candidates")
         bootstrap_mgr = await start_bootstrap_proxy(bootstrap_candidates)
 

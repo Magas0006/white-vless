@@ -41,6 +41,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           XRAY_BIN: /usr/local/bin/xray
+          BOOTSTRAP_KEY: ${{ secrets.BOOTSTRAP_KEY }}
         run: python search_vless.py
 
       - name: commit results
