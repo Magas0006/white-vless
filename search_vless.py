@@ -305,10 +305,10 @@ async def collect_all_keys(session, direct_sources, dorks):
             base = k.split("#")[0]
             if base not in seen: seen.add(base); result.append((k, trusted))
     add(await fetch_direct(session, direct_sources))
-    gh_delay = 6.0 if GITHUB_TOKEN else 10.0
+    gh_delay = 8.0 if GITHUB_TOKEN else 12.0
     log.info(f"github search: {len(dorks)} dorks (delay={gh_delay}s)")
     for i, dork in enumerate(dorks):
-        if i > 0: await asyncio.sleep(gh_delay)
+        if i > 0: await asyncio.sleep(gh_delay + (i % 3) * 2.0)
         found = await github_search(session, dork)
         add(found)
         log.info(f"  [{i+1}/{len(dorks)}] '{dork[:45]}' +{len(found)} total={len(result)}")
@@ -979,13 +979,31 @@ async def main():
         ru_alive = sorted(boot_tcp + untrusted_alive, key=lambda x: x[0])
         log.info(f"alive: {len(ru_alive)}")
 
-        selected = select_keys(ru_alive, MAX_RU_KEYS)
+        selected = select_keys(ru_alive, MAX_RU_KEYS * 2)  # oversample before SNI filter
         log.info(f"selected: {len(selected)}")
 
-        # l7 speed test — requires singbox, filters keys < 1 Mbit/s
+        # SNI quality filter — reality keys must have a known RU SNI
+        # keys without SNI or with non-RU SNI are likely misconfigured or foreign
+        sni_pool_set = set(SNI_POOL)
+        def _has_ru_sni(key):
+            params = extract_params(key)
+            sec = params.get("security", "")
+            if sec != "reality": return True  # tls/none — don't filter by SNI
+            sni = params.get("sni", "").lower()
+            if not sni: return False
+            # check against our RU SNI pool
+            return sni in sni_pool_set or any(sni.endswith("." + d) for d in ("ru", "рф"))
+
+        before_sni = len(selected)
+        selected = [(lat, k) for lat, k in selected if _has_ru_sni(k)]
+        selected = selected[:MAX_RU_KEYS]
+        log.info(f"sni filter: kept {len(selected)}/{before_sni}")
+
+        # l7 speed test — only meaningful if bootstrap RU proxy is up
+        # without it xray connects from GitHub IP → results are unreliable for RU users
         speed_map: dict[str, float] = {}
         binary = _get_binary()
-        if binary:
+        if binary and bootstrap_mgr.socks_url:
             log.info(f"l7 speed tests running (binary: {os.path.basename(binary)})...")
             await bootstrap_mgr.ensure_alive()
             l7_sem = asyncio.Semaphore(L7_CONCURRENCY)
@@ -998,8 +1016,8 @@ async def main():
                     filtered.append((lat, key))
             selected = filtered
             log.info(f"l7: kept {len(selected)}/{before} keys (min 1 Mbit/s)")
-        else:
-            log.info("l7 skipped — set XRAY_BIN or SINGBOX_BIN to enable speed filtering")
+        elif binary:
+            log.info("l7 skipped — bootstrap proxy not available, skipping speed test to avoid false positives")
 
         # build remarks
         _remark_counters.clear()
