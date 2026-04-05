@@ -397,28 +397,37 @@ async def github_search(session: aiohttp.ClientSession, query: str) -> list[str]
         log.warning("GITHUB_TOKEN not set — GitHub API limited to 10 req/hr, results may be incomplete")
     keys = []
     url = f"https://api.github.com/search/code?q={quote(query)}&per_page=30"
-    try:
-        async with session.get(url, headers=gh_headers, timeout=aiohttp.ClientTimeout(total=15)) as r:
-            if r.status == 403:
-                log.warning(f"github_search rate limited (403) for '{query[:45]}' — skipping")
+    for attempt in range(3):
+        try:
+            async with session.get(url, headers=gh_headers, timeout=aiohttp.ClientTimeout(total=15)) as r:
+                if r.status == 403:
+                    retry_after = int(r.headers.get("Retry-After", 30))
+                    wait = max(retry_after, 30)
+                    log.warning(f"github_search rate limited (403) '{query[:45]}' — waiting {wait}s (attempt {attempt+1}/3)")
+                    await asyncio.sleep(wait)
+                    continue
+                if r.status == 422:
+                    log.debug(f"github_search '{query[:45]}': unprocessable query, skipping")
+                    return keys
+                if r.status != 200:
+                    log.debug(f"github_search '{query[:45]}': status {r.status}")
+                    return keys
+                data = await r.json(content_type=None)
+                raw_urls = []
+                for item in data.get("items", []):
+                    raw = (item.get("html_url", "")
+                           .replace("github.com", "raw.githubusercontent.com")
+                           .replace("/blob/", "/"))
+                    if raw:
+                        raw_urls.append(raw)
+                texts = await asyncio.gather(*[fetch_url(session, u) for u in raw_urls[:20]])
+                for t in texts:
+                    keys.extend(_parse_keys(t))
                 return keys
-            if r.status != 200:
-                log.debug(f"github_search '{query[:45]}': status {r.status}")
-                return keys
-            data = await r.json(content_type=None)
-            raw_urls = []
-            for item in data.get("items", []):
-                # FIX: take up to 20 files instead of 15 to reduce key loss
-                raw = (item.get("html_url", "")
-                       .replace("github.com", "raw.githubusercontent.com")
-                       .replace("/blob/", "/"))
-                if raw:
-                    raw_urls.append(raw)
-            texts = await asyncio.gather(*[fetch_url(session, u) for u in raw_urls[:20]])
-            for t in texts:
-                keys.extend(_parse_keys(t))
-    except Exception as e:
-        log.debug(f"github_search '{query}': {e}")
+        except Exception as e:
+            log.debug(f"github_search '{query}': {e}")
+            return keys
+    log.warning(f"github_search '{query[:45]}' — all retries exhausted")
     return keys
 
 async def collect_all_keys(session: aiohttp.ClientSession,
@@ -436,10 +445,12 @@ async def collect_all_keys(session: aiohttp.ClientSession,
 
     add(await fetch_direct(session, direct_sources))
 
-    log.info(f"github search: {len(dorks)} dorks")
+    # GitHub Search API: 10 req/min authenticated → 6s between requests
+    gh_delay = 6.0 if GITHUB_TOKEN else 10.0
+    log.info(f"github search: {len(dorks)} dorks (delay={gh_delay}s)")
     for i, dork in enumerate(dorks):
         if i > 0:
-            await asyncio.sleep(1.5)
+            await asyncio.sleep(gh_delay)
         found = await github_search(session, dork)
         add(found)
         log.info(f"  [{i+1}/{len(dorks)}] '{dork[:45]}' +{len(found)} total={len(result)}")
@@ -682,14 +693,15 @@ def transport_label(key: str) -> str:
 
 def build_remark(key: str, geo: dict, latency: float, is_fast: bool = False) -> str:
     fl  = geo.get("flag", "🏳️")
-    # FIX: for domain hosts geo["isp"] is now populated from ip-api batch lookup
     isp = geo.get("isp") or extract_host(key)
-    ops = score_operators(key, isp)
-    tr  = transport_label(key)
-    lat = f"{latency:.0f}мс"
+    # shorten isp: first word only, max 15 chars
+    isp_short = isp.split()[0][:15] if isp else "?"
+    lat = f"{latency:.0f}ms"
     if is_fast:
-        return f"⚡ ИГРОВОЙ | {fl} | {isp} | {tr} | {lat}"
-    return f"{fl} | {isp} | {tr} | Эфф: {','.join(ops)}"
+        return f"⚡{fl}{isp_short} {lat}"
+    ops = score_operators(key, isp)
+    ops_short = ",".join(ops) if ops != ["Универсальный"] else "🌐"
+    return f"{fl}{isp_short} {ops_short} {lat}"
 
 
 # ── diverse transport selection ───────────────────────────────────────────────
