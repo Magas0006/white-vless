@@ -959,11 +959,12 @@ async def main():
         }
 
         def _keep_key(host, trusted):
+            if trusted: return True  # trusted sources are pre-validated, skip geo check
             if is_ip(host): return is_ru_ip(host)
             cc = DOMAIN_COUNTRY.get(host, "").upper()
             if cc == "RU": return True
-            if cc in NON_RU_CC: return trusted
-            return trusted  # unknown geo — only trusted sources pass
+            if cc in NON_RU_CC: return False
+            return False  # unknown geo — untrusted sources don't pass without confirmed RU
 
         # SNI quality filter — reality keys must have a known RU SNI
         sni_pool_set = set(SNI_POOL)
@@ -974,10 +975,9 @@ async def main():
             if not sni: return False
             return sni in sni_pool_set or sni.endswith(".ru") or sni.endswith(".рф")
 
-        # Trusted sources (igareck, SilentGhostCodes, RKPchannel, zieng2) are
-        # pre-validated by their maintainers from Russia — skip TCP check for them.
-        # Untrusted sources get geo+SNI filter + TCP check.
-        trusted_raw   = [(k, t) for k, t in raw_keys if t     and _keep_key(extract_host(k), t) and _has_ru_sni(k)]
+        # Trusted sources are pre-validated from Russia — skip SNI filter for them
+        # Untrusted sources get full geo+SNI filter + TCP check
+        trusted_raw   = [(k, t) for k, t in raw_keys if t     and _keep_key(extract_host(k), t)]
         untrusted_raw = [(k, t) for k, t in raw_keys if not t and _keep_key(extract_host(k), t) and _has_ru_sni(k)]
 
         # dedup trusted by endpoint
