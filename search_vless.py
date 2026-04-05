@@ -501,7 +501,7 @@ class BootstrapManager:
         cfg_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8")
         cfg_file.write(cfg_json); cfg_file.close()
         proc = _start_proxy_proc(self._binary, cfg_file.name)
-        await asyncio.sleep(2.5)
+        await asyncio.sleep(3.5)
         ok = False
         try:
             proxy = f"socks5://127.0.0.1:{use_port}"
@@ -532,13 +532,15 @@ class BootstrapManager:
 
     async def start(self) -> bool:
         # try candidates in parallel batches of 5 — each gets its own port
-        candidates = [k for k in self._candidates if k not in self._used][:40]
+        candidates = [k for k in self._candidates if k not in self._used][:120]
         base_port = self._port
+        batch_num = 0
         for i in range(0, len(candidates), 5):
             if self.socks_url:  # already found by previous batch
                 break
             batch = candidates[i:i+5]
-            ports = [base_port + i + j for j in range(len(batch))]
+            ports = [base_port + batch_num * 5 + j for j in range(len(batch))]
+            batch_num += 1
             await asyncio.gather(*[self._try_key(k, p) for k, p in zip(batch, ports)])
             self._used.update(batch)
             if self.socks_url:
@@ -955,13 +957,26 @@ async def main():
         ru_keys = deduped
         log.info(f"after dedup: {len(ru_keys)}")
 
-        # bootstrap: start RU proxy using trusted (igareck) keys first
-        bootstrap_candidates = [k for k, t in ru_keys if t] + [k for k, t in ru_keys if not t]
+        # bootstrap: pre-check TCP for trusted candidates to avoid wasting time on dead keys
+        log.info("bootstrap: quick TCP pre-check for trusted candidates...")
+        trusted_keys = [(k, t) for k, t in ru_keys if t]
+        boot_sem = asyncio.Semaphore(60)
+        boot_tcp = await check_keys_tcp(trusted_keys, boot_sem)
+        alive_trusted = [k for _, k in boot_tcp]
+        # fallback to all candidates if not enough alive trusted keys
+        if len(alive_trusted) < 10:
+            other_keys = [(k, t) for k, t in ru_keys if not t]
+            other_tcp = await check_keys_tcp(other_keys[:200], boot_sem)
+            alive_trusted += [k for _, k in other_tcp]
+        bootstrap_candidates = alive_trusted
+        log.info(f"bootstrap: {len(bootstrap_candidates)} alive candidates")
         bootstrap_mgr = await start_bootstrap_proxy(bootstrap_candidates)
 
-        # tcp+tls check (through RU proxy if bootstrap succeeded)
+        # tcp+tls check — trusted keys already checked above, reuse results
         sem = asyncio.Semaphore(CONCURRENCY)
-        ru_alive = await check_keys_tcp(ru_keys, sem)
+        untrusted_keys = [(k, t) for k, t in ru_keys if not t]
+        untrusted_alive = await check_keys_tcp(untrusted_keys, sem)
+        ru_alive = sorted(boot_tcp + untrusted_alive, key=lambda x: x[0])
         log.info(f"alive: {len(ru_alive)}")
 
         selected = select_keys(ru_alive, MAX_RU_KEYS)
