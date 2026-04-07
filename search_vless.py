@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# whitevless — vless parser for russian users
-# deps: pip install aiohttp
 
 import asyncio
 import aiohttp
@@ -11,7 +9,7 @@ import os
 import time
 import logging
 from html import unescape as html_unescape
-from urllib.parse import urlparse, parse_qs, urlencode, urlunparse, quote
+import ipaddress
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger("whitevless")
@@ -129,7 +127,6 @@ async def fetch_direct(session):
     urls = [line for line in _lines(DIRECT_FILE) if line.startswith("http")]
     if not urls: return []
     log.info(f"direct sources: {len(urls)}")
-    # первый URL — приоритетный, грузим отдельно чтобы его ключи шли первыми
     priority_text = await _get(session, urls[0])
     rest_texts    = await asyncio.gather(*[_get(session, u) for u in urls[1:]])
     keys = []
