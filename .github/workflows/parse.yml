@@ -23,25 +23,8 @@ jobs:
       - name: install deps
         run: pip install aiohttp
 
-      - name: install xray
-        run: |
-          LATEST=$(curl -s "https://api.github.com/repos/XTLS/Xray-core/releases/latest" \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            | grep '"tag_name"' | head -1 | cut -d'"' -f4)
-          echo "Latest xray: ${LATEST}"
-          curl -fsSL -o /tmp/xray.zip \
-            "https://github.com/XTLS/Xray-core/releases/download/${LATEST}/Xray-linux-64.zip"
-          mkdir -p /tmp/xray_extract
-          unzip -q /tmp/xray.zip -d /tmp/xray_extract
-          cp /tmp/xray_extract/xray /usr/local/bin/xray
-          chmod +x /usr/local/bin/xray
-          xray version
 
       - name: run parser
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          XRAY_BIN: /usr/local/bin/xray
-          BOOTSTRAP_KEY: ${{ secrets.BOOTSTRAP_KEY }}
         run: python search_vless.py
 
       - name: commit results
