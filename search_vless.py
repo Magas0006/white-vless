@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # whitevless — vless parser for russian users
-# logic: collect → dedup → TCP check → write
 # deps: pip install aiohttp
 
 import asyncio
@@ -17,27 +16,17 @@ from urllib.parse import urlparse, parse_qs, urlencode, urlunparse, quote
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger("whitevless")
 
-# ── paths ────────────────────────────────────────────────────────────────────
-BASE_DIR      = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_FILE   = os.path.join(BASE_DIR, "filtered_vless_keys.txt")
-DIRECT_FILE   = os.path.join(BASE_DIR, "sources", "direct.txt")
-DORKS_FILE    = os.path.join(BASE_DIR, "sources", "github_dorks.txt")
-BLACKLIST_FILE= os.path.join(BASE_DIR, "blacklist", "vless_blacklist.txt")
-CLASH_FILE    = os.path.join(BASE_DIR, "clash.yaml")
+# ── paths ─────────────────────────────────────────────────────────────────────
+BASE_DIR       = os.path.dirname(os.path.abspath(__file__))
+OUTPUT_FILE    = os.path.join(BASE_DIR, "filtered_vless_keys.txt")
+DIRECT_FILE    = os.path.join(BASE_DIR, "sources", "direct.txt")
+BLACKLIST_FILE = os.path.join(BASE_DIR, "blacklist", "vless_blacklist.txt")
+CLASH_FILE     = os.path.join(BASE_DIR, "clash.yaml")
 
-# ── settings ─────────────────────────────────────────────────────────────────
-MAX_KEYS     = 200
-TCP_TIMEOUT  = 8.0
-CONCURRENCY  = 100
-GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
-
-TRUSTED_SOURCE_PATTERNS = (
-    "igareck/vpn-configs-for-russia",
-    "SilentGhostCodes/WhiteListVpn",
-    "RKPchannel/RKP_bypass_configs",
-    "zieng2/wl",
-    "AvenCores/goida-vpn-configs",
-)
+# ── settings ──────────────────────────────────────────────────────────────────
+MAX_KEYS    = 200
+TCP_TIMEOUT = 8.0
+CONCURRENCY = 100
 
 UUID_RE   = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$', re.I)
 ARABIC_RE = re.compile(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]')
@@ -47,8 +36,8 @@ BLOCKLIST_EXACT:   set[str] = set()
 BLOCKLIST_PARTIAL: set[str] = set()
 
 # ── SNI / operator data ───────────────────────────────────────────────────────
-SNI_DIR      = os.path.join(BASE_DIR, "sni")
-SNI_FILES    = {
+SNI_DIR   = os.path.join(BASE_DIR, "sni")
+SNI_FILES = {
     "mts":           os.path.join(SNI_DIR, "mts",           "sni.txt"),
     "beeline":       os.path.join(SNI_DIR, "beeline",       "sni.txt"),
     "megafon":       os.path.join(SNI_DIR, "megafon",       "sni.txt"),
@@ -99,7 +88,6 @@ def _is_blocked(key):
 def _clean(raw):
     key = raw.strip()
     if not key.startswith("vless://"): return None
-    # strip arabic / spam from base (before #)
     base = ARABIC_RE.sub("", key.split("#")[0])
     if SPAM_RE.search(base): return None
     if _is_blocked(key): return None
@@ -109,7 +97,6 @@ def _clean(raw):
         if not p.hostname or not p.port: return None
         if not (1 <= p.port <= 65535): return None
     except: return None
-    # inject fp for reality if missing
     params = {k: v[0] for k, v in parse_qs(urlparse(base).query).items()}
     if params.get("security") == "reality" and "fp" not in params:
         params["fp"] = "chrome"
@@ -130,70 +117,31 @@ def _parse_text(text):
     return keys
 
 # ── fetching ──────────────────────────────────────────────────────────────────
-async def _get(session, url, accept="text/plain, */*"):
+async def _get(session, url):
     try:
-        async with session.get(url, headers={"Accept": accept},
+        async with session.get(url, headers={"Accept": "text/plain, */*"},
                                timeout=aiohttp.ClientTimeout(total=20)) as r:
             if r.status == 200: return await r.text(errors="ignore")
     except Exception as e: log.debug(f"fetch {url}: {e}")
     return ""
 
 async def fetch_direct(session):
-    sources = []
-    for line in _lines(DIRECT_FILE):
-        parts = line.split("|"); url = parts[0].strip()
-        if not url.startswith("http"): continue
-        accept = parts[2].strip() if len(parts) > 2 else "text/plain, */*"
-        trusted = any(p in url for p in TRUSTED_SOURCE_PATTERNS)
-        sources.append((url, accept, trusted))
-    log.info(f"direct sources: {len(sources)}")
-    texts = await asyncio.gather(*[_get(session, url, acc) for url, acc, _ in sources])
+    urls = [line for line in _lines(DIRECT_FILE) if line.startswith("http")]
+    if not urls: return []
+    log.info(f"direct sources: {len(urls)}")
+    # первый URL — приоритетный, грузим отдельно чтобы его ключи шли первыми
+    priority_text = await _get(session, urls[0])
+    rest_texts    = await asyncio.gather(*[_get(session, u) for u in urls[1:]])
     keys = []
-    for (url, _, trusted), text in zip(sources, texts):
+    for url, text in zip(urls, [priority_text] + list(rest_texts)):
         found = _parse_text(text)
-        if found: log.info(f"  {url.split('/')[-1][:45]}: {len(found)} (trusted={trusted})")
-        for k in found: keys.append((k, trusted))
-    return keys
-
-async def _github_search(session, query):
-    headers = {"Accept": "application/vnd.github+json"}
-    if GITHUB_TOKEN: headers["Authorization"] = f"Bearer {GITHUB_TOKEN}"
-    url = f"https://api.github.com/search/code?q={quote(query)}&per_page=30"
-    for attempt in range(3):
-        try:
-            async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=15)) as r:
-                if r.status == 403:
-                    wait = max(int(r.headers.get("Retry-After", 30)), 30)
-                    log.warning(f"rate limit '{query[:40]}' wait {wait}s")
-                    await asyncio.sleep(wait); continue
-                if r.status in (422, 401): return []
-                if r.status != 200: return []
-                data = await r.json(content_type=None)
-                raw_urls = []
-                for item in data.get("items", []):
-                    raw = item.get("html_url","").replace("github.com","raw.githubusercontent.com").replace("/blob/","/")
-                    if raw: raw_urls.append(raw)
-                texts = await asyncio.gather(*[_get(session, u) for u in raw_urls[:20]])
-                keys = []
-                for t in texts: keys.extend(_parse_text(t))
-                return [(k, False) for k in keys]
-        except Exception as e: log.debug(f"github '{query}': {e}"); return []
-    return []
-
-async def fetch_github(session):
-    dorks = _lines(DORKS_FILE)
-    log.info(f"github dorks: {len(dorks)}")
-    delay = 8.0 if GITHUB_TOKEN else 12.0
-    keys = []
-    for i, dork in enumerate(dorks):
-        if i > 0: await asyncio.sleep(delay + (i % 3) * 2.0)
-        found = await _github_search(session, dork)
+        if found: log.info(f"  {url.split('/')[-1][:50]}: {len(found)}")
         keys.extend(found)
-        log.info(f"  [{i+1}/{len(dorks)}] '{dork[:45]}' +{len(found)} total={len(keys)}")
     return keys
 
-# ── TCP check ─────────────────────────────────────────────────────────────────
-async def tcp_check(host, port):
+# ── 4-stage check ─────────────────────────────────────────────────────────────
+async def _stage1_tcp(host, port) -> float:
+    """Stage 1: TCP connect — returns latency ms or -1"""
     try:
         start = time.monotonic()
         _, writer = await asyncio.wait_for(
@@ -204,16 +152,80 @@ async def tcp_check(host, port):
         return (time.monotonic() - start) * 1000
     except: return -1.0
 
+async def _stage2_http_get(session, host, port) -> bool:
+    """Stage 2: HTTP GET — any response OR connection refused = host reacted = alive"""
+    for scheme in ("https", "http"):
+        try:
+            url = f"{scheme}://{host}:{port}/"
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=TCP_TIMEOUT),
+                                   allow_redirects=False) as r:
+                return True  # got any HTTP response
+        except aiohttp.ServerConnectionError: return True   # connection refused = host is up
+        except aiohttp.ClientConnectorError as e:
+            if "connection refused" in str(e).lower(): return True
+        except asyncio.TimeoutError: pass
+        except: pass
+    return False
+
+async def _stage3_http_head(session, host, port) -> bool:
+    """Stage 3: HTTP HEAD — any response OR connection refused = host reacted = alive"""
+    for scheme in ("https", "http"):
+        try:
+            url = f"{scheme}://{host}:{port}/"
+            async with session.head(url, timeout=aiohttp.ClientTimeout(total=TCP_TIMEOUT),
+                                    allow_redirects=False) as r:
+                return True  # got any HTTP response
+        except aiohttp.ServerConnectionError: return True
+        except aiohttp.ClientConnectorError as e:
+            if "connection refused" in str(e).lower(): return True
+        except asyncio.TimeoutError: pass
+        except: pass
+    return False
+
+async def _stage4_icmp(host) -> bool:
+    """Stage 4: ICMP ping via subprocess (works without root)"""
+    import platform
+    flag = "-n" if platform.system().lower() == "windows" else "-c"
+    try:
+        proc = await asyncio.wait_for(
+            asyncio.create_subprocess_exec(
+                "ping", flag, "1", "-W", "3", host,
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
+            ), timeout=TCP_TIMEOUT + 2)
+        await proc.wait()
+        return proc.returncode == 0
+    except: return False
+
 async def check_tcp_batch(keys, sem):
-    async def _one(key):
+    async def _one(key, session):
         host = _extract(key, "host")
         port = _extract(key, "port")
         if not host or not port: return None
         async with sem:
-            lat = await tcp_check(host, port)
-            if lat < 0: return None
+            # stage 1: TCP
+            lat = await _stage1_tcp(host, port)
+            if lat < 0:
+                log.debug(f"  [FAIL tcp]  {host}:{port}")
+                return None
+            # stage 2: HTTP GET
+            if not await _stage2_http_get(session, host, port):
+                log.debug(f"  [FAIL get]  {host}:{port}")
+                return None
+            # stage 3: HTTP HEAD
+            if not await _stage3_http_head(session, host, port):
+                log.debug(f"  [FAIL head] {host}:{port}")
+                return None
+            # stage 4: ICMP ping
+            if not await _stage4_icmp(host):
+                log.debug(f"  [FAIL icmp] {host}:{port}")
+                return None
+            log.debug(f"  [PASS all]  {host}:{port} {lat:.0f}ms")
         return (lat, key)
-    results = await asyncio.gather(*[_one(k) for k in keys])
+
+    connector = aiohttp.TCPConnector(limit=150, ssl=False)
+    async with aiohttp.ClientSession(connector=connector) as session:
+        results = await asyncio.gather(*[_one(k, session) for k in keys])
     return sorted([r for r in results if r], key=lambda x: x[0])
 
 # ── geo lookup ────────────────────────────────────────────────────────────────
@@ -233,67 +245,39 @@ async def geo_lookup(session, hosts):
                                     timeout=aiohttp.ClientTimeout(total=15)) as r:
                 if r.status == 200:
                     for item in await r.json(content_type=None):
-                        h = item.get("query","")
-                        cc = item.get("countryCode","")
-                        isp = item.get("isp","") or item.get("org","")
-                        isp = re.sub(r'\s*\(.*?\)','',isp).strip()[:45]
+                        h = item.get("query", "")
+                        cc = item.get("countryCode", "")
+                        isp = item.get("isp", "") or item.get("org", "")
+                        isp = re.sub(r'\s*\(.*?\)', '', isp).strip()[:45]
                         GEO_CACHE[h] = {"cc": cc, "isp": isp, "flag": _cc_flag(cc)}
         except Exception as e: log.debug(f"geo batch: {e}")
         await asyncio.sleep(1.0)
 
-# ── operator scoring ──────────────────────────────────────────────────────────
-_OP_LABELS = {
-    "МТС":                           "🇷🇺 LTE МТС",
-    "МТС|Билайн":                    "🇷🇺 LTE МТС + Билайн",
-    "МТС|МегаФон|Tele2|Билайн":      "🇷🇺 LTE Все операторы",
-    "МТС|МегаФон|Yota|Tele2|Билайн": "🇷🇺 LTE Все операторы",
-    "МегаФон":                       "🇷🇺 LTE МегаФон",
-    "МегаФон|Yota":                  "🇷🇺 LTE МегаФон + Yota",
-    "Tele2":                         "🇷🇺 LTE Tele2",
-    "Билайн":                        "🇷🇺 LTE Билайн",
-    "Универсальный":                 "🇷🇺 LTE Обход",
-}
+# ── remark builder ────────────────────────────────────────────────────────────
 _REMARK_COUNTERS: dict = {}
 
-def _score_ops(key, isp=""):
-    params = _extract(key, "params")
-    sec = params.get("security",""); tp = params.get("type","tcp")
-    fp = params.get("fp",""); port = _extract(key, "port")
-    sni = params.get("sni","").lower(); isp_l = isp.lower()
-    is_reality = sec == "reality"
-    is_grpc = tp == "grpc"; is_ws = tp in ("ws","websocket"); is_xhttp = tp == "xhttp"
-    is_std_port = port in (443, 80, 8443); is_high_port = port > 9999
-    bad_t2 = any(x in isp_l for x in ("digitalocean","hetzner","linode"))
-    mts_sni     = set(OPERATOR_SNI.get("mts",[]))
-    megafon_sni = set(OPERATOR_SNI.get("megafon",[]))
-    t2_sni      = set(OPERATOR_SNI.get("t2",[]))
-    beeline_sni = set(OPERATOR_SNI.get("beeline",[]))
-    all_op_sni  = set(OPERATOR_SNI.get("all_operators",[]))
-    sni_all = sni in all_op_sni
-    ops = []
-    if is_reality and fp and tp in ("tcp","raw","grpc"):
-        if sni in mts_sni or sni_all or is_high_port: ops.append("МТС")
-    if is_reality and (is_std_port or is_xhttp):
-        if sni in megafon_sni or sni_all: ops.extend(["МегаФон","Yota"])
-    if (is_grpc or is_ws or is_xhttp) and not bad_t2:
-        if sni in t2_sni or sni_all: ops.append("Tele2")
-    if is_reality and fp and (sni in beeline_sni or sni_all): ops.append("Билайн")
-    if not ops and sni_all and is_reality: ops = ["МТС","МегаФон","Tele2","Yota","Билайн"]
-    return ops if ops else ["Универсальный"]
-
 def _build_remark(key, lat):
-    host = _extract(key, "host")
-    geo  = GEO_CACHE.get(host, {})
-    isp  = geo.get("isp", host)
-    ops  = _score_ops(key, isp)
-    priority = ["МТС","МегаФон","Tele2","Yota","Билайн"]
-    ops_sorted = sorted(set(ops), key=lambda x: priority.index(x) if x in priority else 99)
-    ops_key = "|".join(ops_sorted)
-    label = _OP_LABELS.get(ops_key) or _OP_LABELS.get(ops_sorted[0] if ops_sorted else "Универсальный","🇷🇺 LTE Обход")
-    isp_short = isp.split()[0][:12] if isp else "?"
-    _REMARK_COUNTERS[label] = _REMARK_COUNTERS.get(label, 0) + 1
-    n = _REMARK_COUNTERS[label]
-    return f"{label} | {isp_short} | #{n}"
+    host   = _extract(key, "host")
+    geo    = GEO_CACHE.get(host, {})
+    flag   = geo.get("flag", "�")
+    isp    = geo.get("isp", "")
+    params = _extract(key, "params")
+    sec    = params.get("security", "")
+    tp     = params.get("type", "tcp")
+
+    if sec == "reality":
+        prefix = "LTE"
+    elif tp in ("ws", "websocket", "grpc", "xhttp"):
+        prefix = "Универсальный"
+    else:
+        prefix = "Сервер"
+
+    _REMARK_COUNTERS["total"] = _REMARK_COUNTERS.get("total", 0) + 1
+    n = _REMARK_COUNTERS["total"]
+
+    isp_short = isp.split()[0][:14] if isp else host[:14]
+
+    return f"{flag} {prefix} | {isp_short} | #{n}"
 
 # ── output ────────────────────────────────────────────────────────────────────
 def _b64e(s): return base64.b64encode(s.encode()).decode()
@@ -327,26 +311,26 @@ def write_clash(keys_with_lat):
         try:
             p = urlparse(key)
             params = {k: v[0] for k, v in parse_qs(p.query).items()}
-            sec = params.get("security",""); tp = params.get("type","tcp")
+            sec = params.get("security", ""); tp = params.get("type", "tcp")
             proxy = {"name": name, "type": "vless", "server": p.hostname,
                      "port": p.port, "uuid": p.username, "udp": True}
-            flow = params.get("flow","")
+            flow = params.get("flow", "")
             if flow: proxy["flow"] = flow
             if sec == "reality":
-                proxy.update({"tls": True, "servername": params.get("sni",""),
-                    "reality-opts": {"public-key": params.get("pbk",""), "short-id": params.get("sid","")},
-                    "client-fingerprint": params.get("fp","chrome")})
+                proxy.update({"tls": True, "servername": params.get("sni", ""),
+                    "reality-opts": {"public-key": params.get("pbk", ""), "short-id": params.get("sid", "")},
+                    "client-fingerprint": params.get("fp", "chrome")})
             elif sec == "tls":
-                proxy.update({"tls": True, "servername": params.get("sni",""), "skip-cert-verify": True})
+                proxy.update({"tls": True, "servername": params.get("sni", ""), "skip-cert-verify": True})
             if tp == "ws":
                 proxy["network"] = "ws"
-                proxy["ws-opts"] = {"path": params.get("path","/"), "headers": {"Host": params.get("host", p.hostname)}}
+                proxy["ws-opts"] = {"path": params.get("path", "/"), "headers": {"Host": params.get("host", p.hostname)}}
             elif tp == "grpc":
                 proxy["network"] = "grpc"
-                proxy["grpc-opts"] = {"grpc-service-name": params.get("serviceName","")}
-            elif tp in ("xhttp","http"):
+                proxy["grpc-opts"] = {"grpc-service-name": params.get("serviceName", "")}
+            elif tp in ("xhttp", "http"):
                 proxy["network"] = "http"
-                proxy["http-opts"] = {"path": [params.get("path","/")]}
+                proxy["http-opts"] = {"path": [params.get("path", "/")]}
             return proxy
         except: return None
 
@@ -426,65 +410,37 @@ async def main():
     ua = {"User-Agent": "Mozilla/5.0 (compatible; WhiteVless/5.0)"}
 
     async with aiohttp.ClientSession(connector=connector, headers=ua) as session:
-        # 1. collect from all sources
-        direct_keys  = await fetch_direct(session)
-        github_keys  = await fetch_github(session)
-        all_keys = direct_keys + github_keys
+        # 1. collect
+        all_keys = await fetch_direct(session)
         log.info(f"total collected: {len(all_keys)}")
 
-        # 2. dedup by endpoint
-        seen, deduped = set(), []
-        for key, trusted in all_keys:
-            ep = f"{_extract(key,'host')}:{_extract(key,'port')}"
-            if ep not in seen:
-                seen.add(ep)
-                deduped.append((key, trusted))
-        log.info(f"after dedup: {len(deduped)}")
+        # 2. dedup by endpoint + limit per host
+        MAX_PER_HOST = 3
+        seen_ep, host_count, deduped = set(), {}, []
+        for key in all_keys:
+            host = _extract(key, "host")
+            ep   = f"{host}:{_extract(key, 'port')}"
+            if ep in seen_ep: continue
+            if host_count.get(host, 0) >= MAX_PER_HOST: continue
+            seen_ep.add(ep)
+            host_count[host] = host_count.get(host, 0) + 1
+            deduped.append(key)
+        log.info(f"after dedup (max {MAX_PER_HOST}/host): {len(deduped)}")
 
-        # 3. split: trusted sources are pre-validated by maintainers from Russia
-        #    → no TCP check needed, take them directly
-        #    untrusted → TCP check to filter dead servers
-        trusted_keys   = [k for k, t in deduped if t]
-        untrusted_keys = [k for k, t in deduped if not t]
-        log.info(f"trusted (no TCP check): {len(trusted_keys)}, untrusted (TCP check): {len(untrusted_keys)}")
-
+        # 3. 4-stage check (TCP → HTTP GET → HTTP HEAD → ICMP)
         sem = asyncio.Semaphore(CONCURRENCY)
-        untrusted_alive = await check_tcp_batch(untrusted_keys, sem)
-        log.info(f"untrusted alive after TCP: {len(untrusted_alive)}")
+        alive = await check_tcp_batch(deduped, sem)
+        log.info(f"alive after TCP: {len(alive)}")
 
-        # trusted get synthetic 1ms latency so they sort first
-        trusted_alive = [(1.0, k) for k in trusted_keys]
-        pool = trusted_alive + untrusted_alive
-        log.info(f"total pool: {len(pool)}")
+        # 4. sort by latency, cap at MAX_KEYS
+        selected = alive[:MAX_KEYS]
+        log.info(f"selected: {len(selected)}")
 
-        # 4. dedup pool by endpoint (trusted already deduped, but untrusted may overlap)
-        seen2, final_pool = set(), []
-        for lat, key in pool:
-            ep = f"{_extract(key,'host')}:{_extract(key,'port')}"
-            if ep not in seen2:
-                seen2.add(ep)
-                final_pool.append((lat, key))
-
-        # 5. select up to MAX_KEYS — MTS-compatible first
-        def _is_mts(key):
-            params = _extract(key, "params")
-            if params.get("security") != "reality" or not params.get("fp"): return False
-            if params.get("type","tcp") not in ("tcp","raw","grpc"): return False
-            sni = params.get("sni","").lower()
-            all_op = set(OPERATOR_SNI.get("all_operators",[]))
-            mts    = set(OPERATOR_SNI.get("mts",[]))
-            return sni in mts or sni in all_op or _extract(key,"port") > 9999
-
-        mts_keys   = [(lat, k) for lat, k in final_pool if _is_mts(k)]
-        other_keys = [(lat, k) for lat, k in final_pool if not _is_mts(k)]
-        selected = (mts_keys + other_keys)[:MAX_KEYS]
-        log.info(f"selected: {len(selected)} (mts-compatible: {len(mts_keys[:MAX_KEYS])})")
-
-        # 6. geo lookup for remarks
-        hosts = list(dict.fromkeys(_extract(k,"host") for _, k in selected))
+        # 5. geo lookup for remarks
+        hosts = list(dict.fromkeys(_extract(k, "host") for _, k in selected))
         await geo_lookup(session, hosts)
 
-        # 7. write output
+        # 6. write output
         write_output(selected)
         write_clash(selected)
         log.info(f"done: {len(selected)} keys")
