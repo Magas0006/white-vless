@@ -9,7 +9,7 @@ import os
 import time
 import logging
 from html import unescape as html_unescape
-import ipaddress
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse, quote
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger("whitevless")
@@ -22,9 +22,10 @@ BLACKLIST_FILE = os.path.join(BASE_DIR, "blacklist", "vless_blacklist.txt")
 CLASH_FILE     = os.path.join(BASE_DIR, "clash.yaml")
 
 # ── settings ──────────────────────────────────────────────────────────────────
-MAX_KEYS    = 200
-TCP_TIMEOUT = 8.0
-CONCURRENCY = 100
+MAX_KEYS     = 200
+MAX_PER_HOST = 3
+TCP_TIMEOUT  = 6.0
+CONCURRENCY  = 80
 
 UUID_RE   = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$', re.I)
 ARABIC_RE = re.compile(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]')
@@ -33,27 +34,11 @@ SPAM_RE   = re.compile(r'(t\.me|telegram\.(me|org|dog)|@[\w_]{3,}|купить|�
 BLOCKLIST_EXACT:   set[str] = set()
 BLOCKLIST_PARTIAL: set[str] = set()
 
-# ── SNI / operator data ───────────────────────────────────────────────────────
-SNI_DIR   = os.path.join(BASE_DIR, "sni")
-SNI_FILES = {
-    "mts":           os.path.join(SNI_DIR, "mts",           "sni.txt"),
-    "beeline":       os.path.join(SNI_DIR, "beeline",       "sni.txt"),
-    "megafon":       os.path.join(SNI_DIR, "megafon",       "sni.txt"),
-    "t2":            os.path.join(SNI_DIR, "t2",            "sni.txt"),
-    "yota":          os.path.join(SNI_DIR, "yota",          "sni.txt"),
-    "all_operators": os.path.join(SNI_DIR, "all_operators", "sni.txt"),
-}
-OPERATOR_SNI: dict[str, list] = {}
-
+# ── helpers ───────────────────────────────────────────────────────────────────
 def _lines(path):
     if not os.path.exists(path): return []
     with open(path, encoding="utf-8", errors="ignore") as f:
         return [l.strip() for l in f if l.strip() and not l.startswith("#")]
-
-def load_config():
-    for op, path in SNI_FILES.items():
-        OPERATOR_SNI[op] = _lines(path)
-        log.info(f"sni [{op}]: {len(OPERATOR_SNI[op])}")
 
 def load_blocklist():
     if not os.path.exists(BLACKLIST_FILE): return
@@ -105,6 +90,14 @@ def _clean(raw):
 def _parse_text(text):
     text = html_unescape(text)
     text = re.sub(r'&amp%3B|%26amp%3B', '&', text, flags=re.I)
+    # автодетект base64-подписки
+    stripped = text.strip()
+    if stripped and "vless://" not in stripped[:200]:
+        try:
+            decoded = base64.b64decode(stripped + "==").decode("utf-8", errors="ignore")
+            if "vless://" in decoded:
+                text = decoded
+        except: pass
     keys = []
     for line in text.splitlines():
         line = line.strip()
@@ -118,9 +111,12 @@ def _parse_text(text):
 async def _get(session, url):
     try:
         async with session.get(url, headers={"Accept": "text/plain, */*"},
-                               timeout=aiohttp.ClientTimeout(total=20)) as r:
-            if r.status == 200: return await r.text(errors="ignore")
-    except Exception as e: log.debug(f"fetch {url}: {e}")
+                               timeout=aiohttp.ClientTimeout(total=25)) as r:
+            if r.status == 200:
+                return await r.text(errors="ignore")
+            log.debug(f"fetch {url}: status {r.status}")
+    except Exception as e:
+        log.debug(f"fetch {url}: {e}")
     return ""
 
 async def fetch_direct(session):
@@ -128,17 +124,16 @@ async def fetch_direct(session):
     if not urls: return []
     log.info(f"direct sources: {len(urls)}")
     priority_text = await _get(session, urls[0])
-    rest_texts    = await asyncio.gather(*[_get(session, u) for u in urls[1:]])
+    rest_texts = await asyncio.gather(*[_get(session, u) for u in urls[1:]])
     keys = []
     for url, text in zip(urls, [priority_text] + list(rest_texts)):
         found = _parse_text(text)
-        if found: log.info(f"  {url.split('/')[-1][:50]}: {len(found)}")
+        log.info(f"  {url.split('/')[-1][:50]}: {len(found)} keys")
         keys.extend(found)
     return keys
 
-# ── 4-stage check ─────────────────────────────────────────────────────────────
-async def _stage1_tcp(host, port) -> float:
-    """Stage 1: TCP connect — returns latency ms or -1"""
+# ── TCP check ─────────────────────────────────────────────────────────────────
+async def tcp_check(host, port) -> float:
     try:
         start = time.monotonic()
         _, writer = await asyncio.wait_for(
@@ -149,87 +144,23 @@ async def _stage1_tcp(host, port) -> float:
         return (time.monotonic() - start) * 1000
     except: return -1.0
 
-async def _stage2_http_get(session, host, port) -> bool:
-    """Stage 2: HTTP GET — any response OR connection refused = host reacted = alive"""
-    for scheme in ("https", "http"):
-        try:
-            url = f"{scheme}://{host}:{port}/"
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=TCP_TIMEOUT),
-                                   allow_redirects=False) as r:
-                return True  # got any HTTP response
-        except aiohttp.ServerConnectionError: return True   # connection refused = host is up
-        except aiohttp.ClientConnectorError as e:
-            if "connection refused" in str(e).lower(): return True
-        except asyncio.TimeoutError: pass
-        except: pass
-    return False
-
-async def _stage3_http_head(session, host, port) -> bool:
-    """Stage 3: HTTP HEAD — any response OR connection refused = host reacted = alive"""
-    for scheme in ("https", "http"):
-        try:
-            url = f"{scheme}://{host}:{port}/"
-            async with session.head(url, timeout=aiohttp.ClientTimeout(total=TCP_TIMEOUT),
-                                    allow_redirects=False) as r:
-                return True  # got any HTTP response
-        except aiohttp.ServerConnectionError: return True
-        except aiohttp.ClientConnectorError as e:
-            if "connection refused" in str(e).lower(): return True
-        except asyncio.TimeoutError: pass
-        except: pass
-    return False
-
-async def _stage4_icmp(host) -> bool:
-    """Stage 4: ICMP ping via subprocess (works without root)"""
-    import platform
-    flag = "-n" if platform.system().lower() == "windows" else "-c"
-    try:
-        proc = await asyncio.wait_for(
-            asyncio.create_subprocess_exec(
-                "ping", flag, "1", "-W", "3", host,
-                stdout=asyncio.subprocess.DEVNULL,
-                stderr=asyncio.subprocess.DEVNULL,
-            ), timeout=TCP_TIMEOUT + 2)
-        await proc.wait()
-        return proc.returncode == 0
-    except: return False
-
-async def check_tcp_batch(keys, sem):
-    async def _one(key, session):
+async def check_batch(keys, sem):
+    async def _one(key):
         host = _extract(key, "host")
         port = _extract(key, "port")
         if not host or not port: return None
         async with sem:
-            # stage 1: TCP
-            lat = await _stage1_tcp(host, port)
-            if lat < 0:
-                log.debug(f"  [FAIL tcp]  {host}:{port}")
-                return None
-            # stage 2: HTTP GET
-            if not await _stage2_http_get(session, host, port):
-                log.debug(f"  [FAIL get]  {host}:{port}")
-                return None
-            # stage 3: HTTP HEAD
-            if not await _stage3_http_head(session, host, port):
-                log.debug(f"  [FAIL head] {host}:{port}")
-                return None
-            # stage 4: ICMP ping
-            if not await _stage4_icmp(host):
-                log.debug(f"  [FAIL icmp] {host}:{port}")
-                return None
-            log.debug(f"  [PASS all]  {host}:{port} {lat:.0f}ms")
+            lat = await tcp_check(host, port)
+        if lat < 0: return None
         return (lat, key)
-
-    connector = aiohttp.TCPConnector(limit=150, ssl=False)
-    async with aiohttp.ClientSession(connector=connector) as session:
-        results = await asyncio.gather(*[_one(k, session) for k in keys])
+    results = await asyncio.gather(*[_one(k) for k in keys])
     return sorted([r for r in results if r], key=lambda x: x[0])
 
 # ── geo lookup ────────────────────────────────────────────────────────────────
 GEO_CACHE: dict[str, dict] = {}
 
 def _cc_flag(cc):
-    if len(cc) != 2: return "🏳️"
+    if len(cc) != 2: return "🌐"
     return chr(ord(cc[0]) + 127397) + chr(ord(cc[1]) + 127397)
 
 async def geo_lookup(session, hosts):
@@ -242,8 +173,8 @@ async def geo_lookup(session, hosts):
                                     timeout=aiohttp.ClientTimeout(total=15)) as r:
                 if r.status == 200:
                     for item in await r.json(content_type=None):
-                        h = item.get("query", "")
-                        cc = item.get("countryCode", "")
+                        h   = item.get("query", "")
+                        cc  = item.get("countryCode", "")
                         isp = item.get("isp", "") or item.get("org", "")
                         isp = re.sub(r'\s*\(.*?\)', '', isp).strip()[:45]
                         GEO_CACHE[h] = {"cc": cc, "isp": isp, "flag": _cc_flag(cc)}
@@ -251,12 +182,12 @@ async def geo_lookup(session, hosts):
         await asyncio.sleep(1.0)
 
 # ── remark builder ────────────────────────────────────────────────────────────
-_REMARK_COUNTERS: dict = {}
+_COUNTER = {"n": 0}
 
 def _build_remark(key, lat):
     host   = _extract(key, "host")
     geo    = GEO_CACHE.get(host, {})
-    flag   = geo.get("flag", "�")
+    flag   = geo.get("flag", "🌐")
     isp    = geo.get("isp", "")
     params = _extract(key, "params")
     sec    = params.get("security", "")
@@ -269,19 +200,16 @@ def _build_remark(key, lat):
     else:
         prefix = "Сервер"
 
-    _REMARK_COUNTERS["total"] = _REMARK_COUNTERS.get("total", 0) + 1
-    n = _REMARK_COUNTERS["total"]
-
+    _COUNTER["n"] += 1
     isp_short = isp.split()[0][:14] if isp else host[:14]
-
-    return f"{flag} {prefix} | {isp_short} | #{n}"
+    return f"{flag} {prefix} | {isp_short} | #{_COUNTER['n']}"
 
 # ── output ────────────────────────────────────────────────────────────────────
 def _b64e(s): return base64.b64encode(s.encode()).decode()
 
 def write_output(keys_with_lat):
     announce = (
-        "Как пользоваться:\n1. Нажмите на иконку где 2 стрелки \n2. Нажмите на иконку правее.\n"
+        "Как пользоваться:\n1. Нажмите на иконку где 2 стрелки\n2. Нажмите на иконку правее.\n"
         "3. Выберите сервер где меньше всего ms (100ms)\n"
         "Не заходите на рф сервисы через VPN!"
     )
@@ -292,7 +220,7 @@ def write_output(keys_with_lat):
         "#profile-web-page-url: https://github.com/plsn1337/white-vless/",
         f"#announce: base64:{_b64e(announce)}", "",
     ])
-    _REMARK_COUNTERS.clear()
+    _COUNTER["n"] = 0
     lines = []
     for lat, key in keys_with_lat:
         remark = _build_remark(key, lat)
@@ -331,45 +259,48 @@ def write_clash(keys_with_lat):
             return proxy
         except: return None
 
-    def _to_yaml(obj, indent=0):
+    def _yv(v):
+        if isinstance(v, bool): return "true" if v else "false"
+        if isinstance(v, (int, float)): return str(v)
+        s = str(v)
+        if any(c in s for c in ':{}[]|>&*!,#?@`\'"') or not s: return f'"{s}"'
+        return s
+
+    def _yaml(obj, indent=0):
         pad = "  " * indent
         if isinstance(obj, dict):
-            lines = []
+            out = []
             for k, v in obj.items():
                 if isinstance(v, (dict, list)):
-                    lines.append(f"{pad}{k}:")
-                    lines.append(_to_yaml(v, indent+1))
+                    out.append(f"{pad}{k}:"); out.append(_yaml(v, indent+1))
                 else:
-                    lines.append(f"{pad}{k}: {_yaml_val(v)}")
-            return "\n".join(lines)
+                    out.append(f"{pad}{k}: {_yv(v)}")
+            return "\n".join(out)
         elif isinstance(obj, list):
-            lines = []
+            out = []
             for item in obj:
                 if isinstance(item, dict):
-                    items = list(item.items())
-                    fk, fv = items[0]
+                    items = list(item.items()); fk, fv = items[0]
                     if isinstance(fv, (dict, list)):
-                        lines.append(f"{pad}- {fk}:")
-                        lines.append(_to_yaml(fv, indent+2))
+                        out.append(f"{pad}- {fk}:"); out.append(_yaml(fv, indent+2))
                     else:
-                        lines.append(f"{pad}- {fk}: {_yaml_val(fv)}")
+                        out.append(f"{pad}- {fk}: {_yv(fv)}")
                     for k, v in items[1:]:
                         if isinstance(v, (dict, list)):
-                            lines.append(f"{pad}  {k}:")
-                            lines.append(_to_yaml(v, indent+2))
+                            out.append(f"{pad}  {k}:"); out.append(_yaml(v, indent+2))
                         else:
-                            lines.append(f"{pad}  {k}: {_yaml_val(v)}")
+                            out.append(f"{pad}  {k}: {_yv(v)}")
                 else:
-                    lines.append(f"{pad}- {_yaml_val(item)}")
-            return "\n".join(lines)
-        return f"{pad}{_yaml_val(obj)}"
+                    out.append(f"{pad}- {_yv(item)}")
+            return "\n".join(out)
+        return f"{pad}{_yv(obj)}"
 
     proxies, names = [], []
-    _REMARK_COUNTERS.clear()
+    _COUNTER["n"] = 0
     for lat, key in keys_with_lat:
         name = _build_remark(key, lat)
-        base = name; n = 1
-        while name in names: name = f"{base} ({n})"; n += 1
+        base = name; i = 1
+        while name in names: name = f"{base} ({i})"; i += 1
         px = _proxy(key, name)
         if px: proxies.append(px); names.append(name)
 
@@ -388,19 +319,11 @@ def write_clash(keys_with_lat):
     }
     with open(CLASH_FILE, "w", encoding="utf-8") as f:
         f.write("# WhiteVless — Clash Meta config\n")
-        f.write(_to_yaml(cfg) + "\n")
+        f.write(_yaml(cfg) + "\n")
     log.info(f"written clash: {len(proxies)} proxies → {CLASH_FILE}")
-
-def _yaml_val(v):
-    if isinstance(v, bool): return "true" if v else "false"
-    if isinstance(v, (int, float)): return str(v)
-    s = str(v)
-    if any(c in s for c in ':{}[]|>&*!,#?@`\'"') or not s: return f'"{s}"'
-    return s
 
 # ── main ──────────────────────────────────────────────────────────────────────
 async def main():
-    load_config()
     load_blocklist()
 
     connector = aiohttp.TCPConnector(limit=150, ssl=False)
@@ -411,8 +334,7 @@ async def main():
         all_keys = await fetch_direct(session)
         log.info(f"total collected: {len(all_keys)}")
 
-        # 2. dedup by endpoint + limit per host
-        MAX_PER_HOST = 3
+        # 2. dedup by endpoint + max 3 keys per host
         seen_ep, host_count, deduped = set(), {}, []
         for key in all_keys:
             host = _extract(key, "host")
@@ -422,22 +344,22 @@ async def main():
             seen_ep.add(ep)
             host_count[host] = host_count.get(host, 0) + 1
             deduped.append(key)
-        log.info(f"after dedup (max {MAX_PER_HOST}/host): {len(deduped)}")
+        log.info(f"after dedup: {len(deduped)}")
 
-        # 3. 4-stage check (TCP → HTTP GET → HTTP HEAD → ICMP)
+        # 3. TCP check 
         sem = asyncio.Semaphore(CONCURRENCY)
-        alive = await check_tcp_batch(deduped, sem)
+        alive = await check_batch(deduped, sem)
         log.info(f"alive after TCP: {len(alive)}")
 
-        # 4. sort by latency, cap at MAX_KEYS
+        # 4. cap at MAX_KEYS
         selected = alive[:MAX_KEYS]
         log.info(f"selected: {len(selected)}")
 
-        # 5. geo lookup for remarks
+        # 5. geo lookup
         hosts = list(dict.fromkeys(_extract(k, "host") for _, k in selected))
         await geo_lookup(session, hosts)
 
-        # 6. write output
+        # 6. write
         write_output(selected)
         write_clash(selected)
         log.info(f"done: {len(selected)} keys")
