@@ -33,6 +33,10 @@
 ```text
 https://raw.githubusercontent.com/plsn1337/white-vless/refs/heads/main/filtered_vless_keys.txt
 ```
+**Зеркало**:
+```text
+https://loginvkcom.vercel.app/sub
+```
 
 4. **Обновите** → выберите сервер → **▶️ Подключиться**
 
@@ -92,6 +96,10 @@ https://raw.githubusercontent.com/plsn1337/white-vless/refs/heads/main/filtered_
 
 ```text
 https://raw.githubusercontent.com/plsn1337/white-vless/refs/heads/main/filtered_vless_keys.txt
+```
+**Mirror**:
+```text
+https://loginvkcom.vercel.app/sub
 ```
 
 </div>
