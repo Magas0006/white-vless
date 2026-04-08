@@ -44,10 +44,13 @@ def load_blocklist():
     if not os.path.exists(BLACKLIST_FILE): return
     with open(BLACKLIST_FILE, encoding="utf-8", errors="ignore") as f:
         for line in f:
-            line = line.strip().lower()
+            line = line.strip()
             if not line or line.startswith("#"): continue
-            if line.startswith("vless://"): BLOCKLIST_EXACT.add(line)
-            else: BLOCKLIST_PARTIAL.add(line)
+            if line.startswith("vless://"):
+                # store only the part before '#' (strip remark) lowercased
+                BLOCKLIST_EXACT.add(line.split("#")[0].lower())
+            else:
+                BLOCKLIST_PARTIAL.add(line.lower())
     log.info(f"blocklist: exact={len(BLOCKLIST_EXACT)}, partial={len(BLOCKLIST_PARTIAL)}")
 
 # ── key parsing ───────────────────────────────────────────────────────────────
@@ -65,12 +68,18 @@ def _valid_uuid(u):
     return bool(UUID_RE.match(u)) if u else False
 
 def _is_blocked(key):
-    kl = key.lower()
-    return kl in BLOCKLIST_EXACT or any(p in kl for p in BLOCKLIST_PARTIAL)
+    # check against the base key (no remark) so exact match works regardless of remark
+    base = key.split("#")[0].lower()
+    if base in BLOCKLIST_EXACT: return True
+    # check partial patterns against full key (including remark) to catch @channel patterns
+    full = key.lower()
+    return any(p in full for p in BLOCKLIST_PARTIAL)
 
 def _clean(raw):
     key = raw.strip()
     if not key.startswith("vless://"): return None
+    # reject suspiciously long keys (normal keys are well under 1000 chars)
+    if len(key) > 1000: return None
     base = ARABIC_RE.sub("", key.split("#")[0])
     if SPAM_RE.search(base): return None
     if _is_blocked(key): return None
@@ -81,6 +90,11 @@ def _clean(raw):
         if not (1 <= p.port <= 65535): return None
     except: return None
     params = {k: v[0] for k, v in parse_qs(urlparse(base).query).items()}
+    # reject non-standard encryption values (valid VLESS only uses "none")
+    enc = params.get("encryption", "none")
+    if enc != "none": return None
+    # reject unknown/experimental params that break clients
+    if "pqv" in params: return None
     if params.get("security") == "reality" and "fp" not in params:
         params["fp"] = "chrome"
         parsed = urlparse(base)
@@ -132,8 +146,9 @@ async def fetch_direct(session):
         keys.extend(found)
     return keys
 
-# ── TCP check ─────────────────────────────────────────────────────────────────
+# ── TCP / TLS check ───────────────────────────────────────────────────────────
 async def tcp_check(host, port) -> float:
+    """Plain TCP connect — just checks port is open."""
     try:
         start = time.monotonic()
         _, writer = await asyncio.wait_for(
@@ -144,13 +159,70 @@ async def tcp_check(host, port) -> float:
         return (time.monotonic() - start) * 1000
     except: return -1.0
 
+async def tls_check(host, port, sni) -> float:
+    """TLS handshake with the given SNI — confirms a real TLS server is behind the port."""
+    import ssl
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    try:
+        start = time.monotonic()
+        _, writer = await asyncio.wait_for(
+            asyncio.open_connection(host, port, ssl=ctx, server_hostname=sni),
+            timeout=TCP_TIMEOUT)
+        writer.close()
+        try: await writer.wait_closed()
+        except: pass
+        return (time.monotonic() - start) * 1000
+    except: return -1.0
+
+async def probe_key(key) -> float:
+    """
+    Smart probe:
+    - reality/tls keys → TLS handshake with SNI from key params
+    - plain tcp keys   → TCP connect + send a byte, expect no immediate RST
+    Falls back to plain TCP if TLS handshake fails (some reality servers
+    intentionally drop non-VLESS TLS, but at least the port is open).
+    """
+    host   = _extract(key, "host")
+    port   = _extract(key, "port")
+    params = _extract(key, "params")
+    if not host or not port:
+        return -1.0
+
+    sec = params.get("security", "")
+    sni = params.get("sni", "")
+
+    if sec in ("reality", "tls") and sni:
+        lat = await tls_check(host, port, sni)
+        if lat > 0:
+            return lat
+        # TLS failed — reality servers may reject non-VLESS handshakes,
+        # fall back to plain TCP so we don't discard a potentially live server
+        return await tcp_check(host, port)
+
+    # For plain/ws/grpc: TCP connect + write probe byte
+    try:
+        start = time.monotonic()
+        reader, writer = await asyncio.wait_for(
+            asyncio.open_connection(host, port), timeout=TCP_TIMEOUT)
+        writer.write(b"\x00")
+        await writer.drain()
+        # give server 1s to respond or keep connection open (not RST immediately)
+        try:
+            await asyncio.wait_for(reader.read(1), timeout=1.0)
+        except asyncio.TimeoutError:
+            pass  # timeout is fine — server is alive, just waiting for real data
+        writer.close()
+        try: await writer.wait_closed()
+        except: pass
+        return (time.monotonic() - start) * 1000
+    except: return -1.0
+
 async def check_batch(keys, sem):
     async def _one(key):
-        host = _extract(key, "host")
-        port = _extract(key, "port")
-        if not host or not port: return None
         async with sem:
-            lat = await tcp_check(host, port)
+            lat = await probe_key(key)
         if lat < 0: return None
         return (lat, key)
     results = await asyncio.gather(*[_one(k) for k in keys])
