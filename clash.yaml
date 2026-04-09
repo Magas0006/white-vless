@@ -5,43 +5,21 @@ mode: rule
 log-level: warning
 external-controller: "127.0.0.1:9090"
 proxies:
-  - name: "🇪🇪 LTE | OC | #1"
+  - name: "🇷🇺 Универсальный | JSC | #1"
     type: vless
-    server: 95.85.224.76
+    server: 89.248.207.37
     port: 443
-    uuid: 6bd5e67b-e1fb-48b5-bf8c-bebb3dc6be7e
+    uuid: 6202b230-417c-4d8e-b624-0f71afa9c75d
     udp: true
-    flow: xtls-rprx-vision
     tls: true
-    servername: www.apple.com
-    reality-opts:
-      public-key: ThK5XZ34BgaKYFlstl-LPWepa_ZdCx3xGkvST8o9_Aw
-      short-id: 821975a1a458369e
-    client-fingerprint: chrome
-  - name: "🇩🇪 LTE | Play2go | #2"
-    type: vless
-    server: 64.188.65.117
-    port: 443
-    uuid: 6bd5e67b-e1fb-48b5-bf8c-bebb3dc6be7e
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.apple.com
-    reality-opts:
-      public-key: g3yCgYCBxW-7haWdMy_Wf7bwKMLfCEUwpISi4X1hz00
-      short-id: 6230e77ee2da81dd
-    client-fingerprint: chrome
-  - name: "🇷🇺 Сервер | JSC | #3"
-    type: vless
-    server: 5.182.5.140
-    port: 443
-    uuid: c4f2dee2-14e3-4c02-91e9-31c7917e239c
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: sub.sbrf-cdn342.ru
+    servername: sni.111000.v6.navy
     skip-cert-verify: true
-  - name: "🇷🇺 LTE | JSC | #4"
+    network: ws
+    ws-opts:
+      path: "/?ed=2560&Telegram🇨🇳 @WangCai2"
+      headers:
+        Host: sni.111000.v6.navy
+  - name: "🇷🇺 LTE | JSC | #2"
     type: vless
     server: 37.9.4.29
     port: 8443
@@ -54,35 +32,20 @@ proxies:
       public-key: PI-VyJZafjEnnyJXgwHPX2LyJo8SEgIB_GMehhrWMl8
       short-id: e8d760
     client-fingerprint: firefox
-  - name: "🇷🇺 LTE | Beget | #5"
+  - name: "🇪🇪 LTE | OC | #3"
     type: vless
-    server: 85.198.103.99
-    port: 8443
-    uuid: c6b6b8e0-7a68-4c3b-9aef-ea824322e9cb
+    server: 95.85.224.76
+    port: 443
+    uuid: 6bd5e67b-e1fb-48b5-bf8c-bebb3dc6be7e
     udp: true
     flow: xtls-rprx-vision
     tls: true
-    servername: api-maps.yandex.ru
+    servername: www.apple.com
     reality-opts:
-      public-key: X_IQ_IwiTWzaGOS5kFDEeuCFUjk7LCsIvSL_Iv1DO30
-      short-id: 866dbd3bdf
+      public-key: ThK5XZ34BgaKYFlstl-LPWepa_ZdCx3xGkvST8o9_Aw
+      short-id: 821975a1a458369e
     client-fingerprint: chrome
-  - name: "🇷🇺 LTE | "Domain | #6"
-    type: vless
-    server: 79.174.93.162
-    port: 2083
-    uuid: 9b691795-7bbd-45a8-bca1-10684c064e60
-    udp: true
-    tls: true
-    servername: ads.x5.ru
-    reality-opts:
-      public-key: J6NuOlIq3ypdTFc1TMhDDKmF8BWPnNWZq1EkxD7K-lQ
-      short-id: 6da16b1335651b38
-    client-fingerprint: qq
-    network: grpc
-    grpc-opts:
-      grpc-service-name: UpdateService
-  - name: "🇷🇺 LTE | "Domain | #7"
+  - name: "🇷🇺 LTE | "Domain | #4"
     type: vless
     server: 79.174.94.179
     port: 2083
@@ -97,7 +60,35 @@ proxies:
     network: grpc
     grpc-opts:
       grpc-service-name: UpdateService
-  - name: "🇷🇺 LTE | "Domain | #8"
+  - name: "🇷🇺 LTE | "Domain | #5"
+    type: vless
+    server: 79.174.93.162
+    port: 2083
+    uuid: 9b691795-7bbd-45a8-bca1-10684c064e60
+    udp: true
+    tls: true
+    servername: ads.x5.ru
+    reality-opts:
+      public-key: J6NuOlIq3ypdTFc1TMhDDKmF8BWPnNWZq1EkxD7K-lQ
+      short-id: 6da16b1335651b38
+    client-fingerprint: qq
+    network: grpc
+    grpc-opts:
+      grpc-service-name: UpdateService
+  - name: "🇷🇺 LTE | Beget | #6"
+    type: vless
+    server: 85.198.103.99
+    port: 8443
+    uuid: c6b6b8e0-7a68-4c3b-9aef-ea824322e9cb
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: api-maps.yandex.ru
+    reality-opts:
+      public-key: X_IQ_IwiTWzaGOS5kFDEeuCFUjk7LCsIvSL_Iv1DO30
+      short-id: 866dbd3bdf
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | "Domain | #7"
     type: vless
     server: 79.174.93.81
     port: 2083
@@ -112,46 +103,20 @@ proxies:
     network: grpc
     grpc-opts:
       grpc-service-name: UpdateService
-  - name: "🇷🇺 LTE | LLC | #9"
+  - name: "🇷🇺 LTE | LLC | #8"
     type: vless
-    server: 79.137.175.228
+    server: 95.163.210.78
     port: 443
-    uuid: 1a9e0cbf-7ff3-4b80-87f5-cc53fef2924f
+    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
     udp: true
     flow: xtls-rprx-vision
     tls: true
-    servername: rbc.ru
+    servername: www.vkvideo.ru
     reality-opts:
-      public-key: 7zd9mJilgjOrg_ohtw23Vmio-pdnYqeP_r-kiWt87Cg
-      short-id: 2715592069f36fe7
+      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
+      short-id: 44103f58
     client-fingerprint: chrome
-  - name: "🇷🇺 LTE | Yandex.Cloud | #10"
-    type: vless
-    server: 51.250.117.39
-    port: 443
-    uuid: 07e99c87-c9f2-47bf-ac8e-1d31c817356a
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: tunnel.vk-apps.com
-    reality-opts:
-      public-key: EzS6YGgfE-F0jR0-xXB5rVBh-1oNSC17oquln8hK4Wo
-      short-id: dce3019e
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | JSC | #11"
-    type: vless
-    server: 87.228.4.226
-    port: 443
-    uuid: 12eece11-16ca-4389-99d8-bad7febaa6f8
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: debian.org
-    reality-opts:
-      public-key: ELp9PUvVnkoFJYiscWrbnPXRnsYdELSCbIz9wNmMRRw
-      short-id: 965af8960474c29c
-    client-fingerprint: chrome
-  - name: "🇷🇺 Сервер | JSC | #12"
+  - name: "🇷🇺 Сервер | JSC | #9"
     type: vless
     server: 91.220.109.177
     port: 443
@@ -161,126 +126,7 @@ proxies:
     tls: true
     servername: ru.great-server-list.co.uk
     skip-cert-verify: true
-  - name: "🇷🇺 LTE | JSC | #13"
-    type: vless
-    server: 77.232.132.39
-    port: 443
-    uuid: 8ae7b082-8ada-4352-a66e-c0ab7e48d3ed
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: m.vk.ru
-    reality-opts:
-      public-key: 3JLrOA21KOD2Pd6B6YifuJaZkzH8qL9okJh8cvX7R0M
-      short-id: 8ac77e6b777376c8
-    client-fingerprint: random
-  - name: "🇷🇺 LTE | Selectel | #14"
-    type: vless
-    server: 5.188.115.29
-    port: 443
-    uuid: 1e206801-66e5-40fd-b3c9-d44e383bde76
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: max.ru
-    reality-opts:
-      public-key: yp2vFOv-6UbPxYnCbjsQGbOoU5bhr7bjdzkhGo7fen0
-      short-id: f3cb3c2f7790bc8f
-    client-fingerprint: qq
-  - name: "🇷🇺 LTE | JSC | #15"
-    type: vless
-    server: 81.200.151.228
-    port: 443
-    uuid: 855e307a-cfe6-4486-9832-4d1eb331ef73
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: m.vk.com
-    reality-opts:
-      public-key: pgG2grngQEtOFJImLfz0AEm-O2IodM2jCY4aMCYQI1U
-      short-id: b2a6e3d42f05c3d1
-    client-fingerprint: random
-  - name: "🇷🇺 LTE | JSC | #16"
-    type: vless
-    server: 46.149.71.197
-    port: 2083
-    uuid: 40600c8a-730a-411c-b72b-c3bca115dcf7
-    udp: true
-    tls: true
-    servername: ir.ozone.ru
-    reality-opts:
-      public-key: J6NuOlIq3ypdTFc1TMhDDKmF8BWPnNWZq1EkxD7K-lQ
-      short-id: 6da16b1335651b38
-    client-fingerprint: chrome
-    network: grpc
-    grpc-opts:
-      grpc-service-name: UpdateService
-  - name: "🇷🇺 LTE | JSC | #17"
-    type: vless
-    server: 81.200.151.119
-    port: 443
-    uuid: 855e307a-cfe6-4486-9832-4d1eb331ef73
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: m.vk.com
-    reality-opts:
-      public-key: pgG2grngQEtOFJImLfz0AEm-O2IodM2jCY4aMCYQI1U
-      short-id: b2a6e3d42f05c3d1
-    client-fingerprint: random
-  - name: "🇷🇺 LTE | JSC | #18"
-    type: vless
-    server: 45.152.113.186
-    port: 2095
-    uuid: 698bc4fc-2966-4dbf-bc4f-a0f1df66eab5
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: ozon.ru
-    reality-opts:
-      public-key: IBvNLerjNLpF4OpUX-wGJp8YDZrnKoh-gEItUDNT_Bg
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | EdgeCenter | #19"
-    type: vless
-    server: 91.243.86.229
-    port: 443
-    uuid: 6ba4a020-014c-43be-a243-9503ddaa9a9a
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: api-maps.yandex.ru
-    reality-opts:
-      public-key: 10j87nLqnOZMhNJYf12A_DXRBSWCim--lsG_wO1ceBA
-      short-id: 4dd7752afc53
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | JSC | #20"
-    type: vless
-    server: 45.152.113.186
-    port: 2083
-    uuid: 698bc4fc-2966-4dbf-bc4f-a0f1df66eab5
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: ozon.ru
-    reality-opts:
-      public-key: IBvNLerjNLpF4OpUX-wGJp8YDZrnKoh-gEItUDNT_Bg
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🇪🇪 LTE | OC | #21"
-    type: vless
-    server: 95.85.245.179
-    port: 443
-    uuid: 16b5939f-cfc9-4e3f-b372-86498be16a0b
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: ee1.jugploer.icu
-    reality-opts:
-      public-key: 9wRwCPBEaK7rRCHLzkYLrcyg1d7vo2MaC-BifgNNGmc
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🇱🇹 LTE | UAB | #22"
+  - name: "🇱🇹 LTE | UAB | #10"
     type: vless
     server: 5.199.163.45
     port: 8443
@@ -293,38 +139,10 @@ proxies:
       public-key: L3X1eh1Jq_6PKJ6LlwjgiWq0XNaDOqCVKgIElJ5nkVA
       short-id: e0ef3d5c0aacb615
     client-fingerprint: random
-  - name: "🇷🇺 LTE | JSC | #23"
-    type: vless
-    server: 37.9.4.241
-    port: 443
-    uuid: 04315539-f579-4873-a9b5-3f06d0ca6571
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: 5post-gate.x5.ru
-    reality-opts:
-      public-key: pgG2grngQEtOFJImLfz0AEm-O2IodM2jCY4aMCYQI1U
-      short-id: b2a6e3d42f05c3d1
-    client-fingerprint: random
-  - name: "🇷🇺 LTE | LLC | #24"
-    type: vless
-    server: 84.54.39.189
-    port: 2083
-    uuid: 3de26259-e6b4-4b22-af75-2f473d548e94
-    udp: true
-    tls: true
-    servername: goya.rutube.ru
-    reality-opts:
-      public-key: J6NuOlIq3ypdTFc1TMhDDKmF8BWPnNWZq1EkxD7K-lQ
-      short-id: 6da16b1335651b38
-    client-fingerprint: qq
-    network: grpc
-    grpc-opts:
-      grpc-service-name: UpdateService
-  - name: "🇷🇺 LTE | JSC | #25"
+  - name: "🇷🇺 LTE | JSC | #11"
     type: vless
     server: 45.152.113.186
-    port: 2087
+    port: 9042
     uuid: 698bc4fc-2966-4dbf-bc4f-a0f1df66eab5
     udp: true
     flow: xtls-rprx-vision
@@ -334,7 +152,46 @@ proxies:
       public-key: IBvNLerjNLpF4OpUX-wGJp8YDZrnKoh-gEItUDNT_Bg
       short-id: ""
     client-fingerprint: chrome
-  - name: "🇷🇺 LTE | JSC | #26"
+  - name: "🇪🇪 LTE | OC | #12"
+    type: vless
+    server: 95.85.245.179
+    port: 443
+    uuid: 16b5939f-cfc9-4e3f-b372-86498be16a0b
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: ee1.jugploer.icu
+    reality-opts:
+      public-key: 9wRwCPBEaK7rRCHLzkYLrcyg1d7vo2MaC-BifgNNGmc
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | JSC | #13"
+    type: vless
+    server: 5.129.249.134
+    port: 443
+    uuid: eaca6b0a-9728-5766-8fb0-0be81c1b7c91
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: ir.ozone.ru
+    reality-opts:
+      public-key: F14RpPKCKo_qPcW7EFVu1M18JsAT8c04O08cIi0Ghg4
+      short-id: ab1cd2
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | JSC | #14"
+    type: vless
+    server: 45.152.113.186
+    port: 2095
+    uuid: 698bc4fc-2966-4dbf-bc4f-a0f1df66eab5
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: ozon.ru
+    reality-opts:
+      public-key: IBvNLerjNLpF4OpUX-wGJp8YDZrnKoh-gEItUDNT_Bg
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | JSC | #15"
     type: vless
     server: 85.92.111.163
     port: 2083
@@ -349,33 +206,69 @@ proxies:
     network: grpc
     grpc-opts:
       grpc-service-name: UpdateService
-  - name: "🇷🇺 LTE | JSC | #27"
+  - name: "🇷🇺 LTE | JSC | #16"
     type: vless
-    server: 87.228.101.196
-    port: 443
-    uuid: c90ef0cf-e6a9-4eca-bee9-208b40bbf2b2
+    server: 45.152.113.186
+    port: 2087
+    uuid: 698bc4fc-2966-4dbf-bc4f-a0f1df66eab5
     udp: true
     flow: xtls-rprx-vision
     tls: true
-    servername: m.vk.com
+    servername: ozon.ru
     reality-opts:
-      public-key: pgG2grngQEtOFJImLfz0AEm-O2IodM2jCY4aMCYQI1U
-      short-id: b2a6e3d42f05c3d1
-    client-fingerprint: random
-  - name: "🇷🇺 LTE | Yandex.Cloud | #28"
-    type: vless
-    server: 51.250.17.180
-    port: 443
-    uuid: 8648c51c-42b8-47cf-940c-95ee0afdd4ba
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: wl-6-3.legendary-vpn.com
-    reality-opts:
-      public-key: HXP9HKqhQvwTwh0cgddJ3c3VND1lwRYRXgKfW1XPaX4
-      short-id: bf0c3248f61fe277
+      public-key: IBvNLerjNLpF4OpUX-wGJp8YDZrnKoh-gEItUDNT_Bg
+      short-id: ""
     client-fingerprint: chrome
-  - name: "🇨🇭 LTE | WorkTitans | #29"
+  - name: "🇷🇺 LTE | JSC | #17"
+    type: vless
+    server: 87.228.4.226
+    port: 443
+    uuid: 12eece11-16ca-4389-99d8-bad7febaa6f8
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: debian.org
+    reality-opts:
+      public-key: ELp9PUvVnkoFJYiscWrbnPXRnsYdELSCbIz9wNmMRRw
+      short-id: 965af8960474c29c
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | JSC | #18"
+    type: vless
+    server: 5.129.223.6
+    port: 9894
+    uuid: b59cf03c-704f-44b0-b329-d3443e860481
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: www.ya.ru
+    reality-opts:
+      public-key: im7-98zxWz_OGimQfeoN_Y5p1tAy8KoZCxOe2wOeWS4
+      short-id: ""
+    client-fingerprint: qq
+  - name: "🇷🇺 LTE | "Domain | #19"
+    type: vless
+    server: 79.174.93.60
+    port: 443
+    uuid: c88c6df0-921c-45c6-a65b-d297ccf093dc
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: 5post-gate.x5.ru
+    reality-opts:
+      public-key: jAwOnM7e6QfCB0ASuExwT9KjH0FXND7n2ZGnU8628Dw
+      short-id: 9bbb3f5da7d00263
+    client-fingerprint: qq
+  - name: "🇷🇺 Сервер | JSC | #20"
+    type: vless
+    server: 91.222.236.13
+    port: 443
+    uuid: 541e29bd-d3de-4f1e-b555-6ac2ed8813b2
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: nl.great-server-list.co.uk
+    skip-cert-verify: true
+  - name: "🇨🇭 LTE | WorkTitans | #21"
     type: vless
     server: 5.182.36.56
     port: 45886
@@ -386,8 +279,8 @@ proxies:
     reality-opts:
       public-key: zJeLZDPHoHMcAzBJh38tSavofNlkBrpADFx9jVVPil0
       short-id: 94f9
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | JSC | #30"
+    client-fingerprint: random
+  - name: "🇷🇺 LTE | JSC | #22"
     type: vless
     server: 5.42.99.88
     port: 4397
@@ -400,19 +293,24 @@ proxies:
       public-key: SbVKOEMjK0sIlbwg4akyBg5mL5KZwwB-ed4eEE7YnRc
       short-id: ""
     client-fingerprint: chrome
-  - name: "🇷🇺 Сервер | JSC | #31"
+  - name: "🇷🇺 LTE | JSC | #23"
     type: vless
-    server: 92.255.76.176
-    port: 443
-    uuid: 541e29bd-d3de-4f1e-b555-6ac2ed8813b2
+    server: 46.149.71.197
+    port: 2083
+    uuid: 40600c8a-730a-411c-b72b-c3bca115dcf7
     udp: true
-    flow: xtls-rprx-vision
     tls: true
-    servername: nl.great-server-list.co.uk
-    skip-cert-verify: true
-  - name: "🇷🇺 LTE | JSC | #32"
+    servername: ir.ozone.ru
+    reality-opts:
+      public-key: J6NuOlIq3ypdTFc1TMhDDKmF8BWPnNWZq1EkxD7K-lQ
+      short-id: 6da16b1335651b38
+    client-fingerprint: chrome
+    network: grpc
+    grpc-opts:
+      grpc-service-name: UpdateService
+  - name: "🇷🇺 LTE | JSC | #24"
     type: vless
-    server: 91.222.236.224
+    server: 77.232.132.39
     port: 443
     uuid: 8ae7b082-8ada-4352-a66e-c0ab7e48d3ed
     udp: true
@@ -423,7 +321,56 @@ proxies:
       public-key: 3JLrOA21KOD2Pd6B6YifuJaZkzH8qL9okJh8cvX7R0M
       short-id: 8ac77e6b777376c8
     client-fingerprint: random
-  - name: "🌐 LTE | bs.itg.top | #33"
+  - name: "🇫🇮 LTE | H2nexus | #25"
+    type: vless
+    server: 85.192.49.230
+    port: 443
+    uuid: 8de7627c-1995-41f7-93e6-7fd9715514a2
+    udp: true
+    tls: true
+    servername: www.google.com
+    reality-opts:
+      public-key: VMMc3QkOG66O2cD0Ki36VOEDQxpGT5aK8KAwLGklJzw
+      short-id: c2
+    client-fingerprint: random
+  - name: "🇷🇺 LTE | Selectel | #26"
+    type: vless
+    server: 5.188.115.7
+    port: 666
+    uuid: cf81b0a7-1d28-4dc3-904c-650a86dda459
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: ads.x5.ru
+    reality-opts:
+      public-key: pgG2grngQEtOFJImLfz0AEm-O2IodM2jCY4aMCYQI1U
+      short-id: b2a6e3d42f05c3d1
+    client-fingerprint: random
+  - name: "🇱🇻 LTE | RETN | #27"
+    type: vless
+    server: 45.145.163.115
+    port: 39771
+    uuid: e5bd3d75-06b3-490e-9651-930b1dc29cdb
+    udp: true
+    tls: true
+    servername: yahoo.com
+    reality-opts:
+      public-key: GMnXK7wz7qTo_IFmPy--pQcODPhYJG_CLaY2Sh4fTCI
+      short-id: 33f2
+    client-fingerprint: chrome
+  - name: "🇨🇭 LTE | WorkTitans | #28"
+    type: vless
+    server: 5.182.36.251
+    port: 16331
+    uuid: d7dbeb1e-268c-465c-8f59-489f14703efd
+    udp: true
+    tls: true
+    servername: yahoo.com
+    reality-opts:
+      public-key: wYtc0dMr5fw5bBQkbLNpTqtu0m4B9NKnOyEWjRJUmzk
+      short-id: 910aab
+    client-fingerprint: chrome
+  - name: "🌐 LTE | bs.itg.top | #29"
     type: vless
     server: bs.itg.top
     port: 443
@@ -436,35 +383,33 @@ proxies:
       public-key: 5oEgHwhHz33h2bfRkFu0HBHf6GWWIskal9lBIZegszI
       short-id: 7f897d6654
     client-fingerprint: qq
-  - name: "🇷🇺 LTE | JSC | #34"
+  - name: "🇷🇺 LTE | JSC | #30"
     type: vless
-    server: 72.56.250.146
-    port: 444
-    uuid: 9d4b3ea9-348d-476d-8a9a-7555491dd298
-    udp: true
-    tls: true
-    servername: api-maps.yandex.ru
-    reality-opts:
-      public-key: sCpeAZBGOOE_9CeeXyu3-jl68ODzQjts8gG_ZHk44Qk
-      short-id: d7abeb515312dc2f
-    client-fingerprint: qq
-    network: grpc
-    grpc-opts:
-      grpc-service-name: api-maps.yandex.ru
-  - name: "🇷🇺 LTE | JSC | #35"
-    type: vless
-    server: 91.222.239.220
+    server: 87.228.101.196
     port: 443
-    uuid: 447441de-36d6-4775-9df5-8d575c232322
+    uuid: cf81b0a7-1d28-4dc3-904c-650a86dda459
     udp: true
     flow: xtls-rprx-vision
     tls: true
-    servername: max.ru
+    servername: 5post-gate.x5.ru
     reality-opts:
-      public-key: hBksFtUwQ8MuLktgsxBvfGvguoYQYjd1hyNHZGMMAUY
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🌐 LTE | tl.itg.top | #36"
+      public-key: pgG2grngQEtOFJImLfz0AEm-O2IodM2jCY4aMCYQI1U
+      short-id: b2a6e3d42f05c3d1
+    client-fingerprint: random
+  - name: "🇷🇺 LTE | JSC | #31"
+    type: vless
+    server: 37.9.4.241
+    port: 443
+    uuid: cf81b0a7-1d28-4dc3-904c-650a86dda459
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: 5post-gate.x5.ru
+    reality-opts:
+      public-key: pgG2grngQEtOFJImLfz0AEm-O2IodM2jCY4aMCYQI1U
+      short-id: b2a6e3d42f05c3d1
+    client-fingerprint: random
+  - name: "🌐 LTE | tl.itg.top | #32"
     type: vless
     server: tl.itg.top
     port: 443
@@ -477,7 +422,701 @@ proxies:
       public-key: n7LKDToO7zr-VdZ3UUoy1NxhLbNG4kUWn0FUqN2Y9lc
       short-id: c3fa6763ca
     client-fingerprint: qq
-  - name: "🇷🇺 LTE | Yandex.Cloud | #37"
+  - name: "🇷🇺 LTE | LLC | #33"
+    type: vless
+    server: 84.54.39.189
+    port: 2083
+    uuid: 3de26259-e6b4-4b22-af75-2f473d548e94
+    udp: true
+    tls: true
+    servername: goya.rutube.ru
+    reality-opts:
+      public-key: J6NuOlIq3ypdTFc1TMhDDKmF8BWPnNWZq1EkxD7K-lQ
+      short-id: 6da16b1335651b38
+    client-fingerprint: qq
+    network: grpc
+    grpc-opts:
+      grpc-service-name: UpdateService
+  - name: "🇷🇺 LTE | JSC | #34"
+    type: vless
+    server: 91.222.239.220
+    port: 443
+    uuid: 447441de-36d6-4775-9df5-8d575c232322
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: max.ru
+    reality-opts:
+      public-key: hBksFtUwQ8MuLktgsxBvfGvguoYQYjd1hyNHZGMMAUY
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | Yandex.Cloud | #35"
+    type: vless
+    server: 51.250.25.243
+    port: 443
+    uuid: aa44e342-82e3-4b9a-8250-3ce76ebbcdfd
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: wl-6-1.legendary-vpn.com
+    reality-opts:
+      public-key: uofZM1SG_RthhSONWy50U6cQ5m3kXy-sglwY0CANfi8
+      short-id: 468d8ab371f8f563
+    client-fingerprint: chrome
+  - name: "🌐 LTE | vl.itg.top | #36"
+    type: vless
+    server: vl.itg.top
+    port: 16443
+    uuid: efef9202-923f-4578-9ca0-ce47ea27e84d
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: www.vk.com
+    reality-opts:
+      public-key: v6sOj7ABI1e8cRyM65n7C19HH1Ocl3T1GC6UzJo0dTI
+      short-id: 5d111e857e8f99
+    client-fingerprint: firefox
+  - name: "🌐 LTE | ru-manage.node | #37"
+    type: vless
+    server: ru-manage.nodexphere.net
+    port: 443
+    uuid: 5ed71633-f82e-4def-b936-3283d20f321e
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: ru-manage.nodexphere.net
+    reality-opts:
+      public-key: lDbTuU4-pEAkxizbdrurcjz3eXq0AgECd0hEh0sL0zM
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🌐 LTE | ds.itg.top | #38"
+    type: vless
+    server: ds.itg.top
+    port: 443
+    uuid: efef9202-923f-4578-9ca0-ce47ea27e84d
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: max.ru
+    reality-opts:
+      public-key: c1N9wTbzVQUhO5ZvXRoqE2gFj4C-RcjiJKct1uns0Tk
+      short-id: 1e
+    client-fingerprint: qq
+  - name: "🇪🇪 LTE | OC | #39"
+    type: vless
+    server: 95.85.249.53
+    port: 443
+    uuid: 120a8f6c-3829-4c0f-806f-9477b13eeaa0
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: m.vkvideo.cs7777.vk.ru
+    reality-opts:
+      public-key: dfpjZXFTymcxlvi1QnQwuja8AVmTBtHiKMOecY3_l2E
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇪🇪 LTE | OC | #40"
+    type: vless
+    server: 95.85.249.1
+    port: 443
+    uuid: 120a8f6c-3829-4c0f-806f-9477b13eeaa0
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: m.vkvideo.cs7777.vk.ru
+    reality-opts:
+      public-key: dfpjZXFTymcxlvi1QnQwuja8AVmTBtHiKMOecY3_l2E
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | LLC | #41"
+    type: vless
+    server: 95.163.182.98
+    port: 443
+    uuid: 3de26259-e6b4-4b22-af75-2f473d548e94
+    udp: true
+    tls: true
+    servername: eh.vk.com
+    reality-opts:
+      public-key: _oEGDYSSHrqmbHEUoHbp6YnmNTcXTVdWXcDmpi3JdH0
+      short-id: aefbcf7fc283bd55
+    client-fingerprint: qq
+    network: grpc
+    grpc-opts:
+      grpc-service-name: UpdateService
+  - name: "🇷🇺 LTE | Yandex.Cloud | #42"
+    type: vless
+    server: 51.250.108.98
+    port: 4443
+    uuid: 34672705-b2eb-4f68-9ee0-63d9d6e58238
+    udp: true
+    tls: true
+    servername: max.ru
+    reality-opts:
+      public-key: 4iZWExolJV2s1BcPnZvhBbFVE7tbzWCShLyTWy7h9SY
+      short-id: e9b3
+    client-fingerprint: qq
+  - name: "🇪🇪 LTE | OC | #43"
+    type: vless
+    server: 95.85.224.28
+    port: 443
+    uuid: 120a8f6c-3829-4c0f-806f-9477b13eeaa0
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: m.vkvideo.cs7777.vk.ru
+    reality-opts:
+      public-key: dfpjZXFTymcxlvi1QnQwuja8AVmTBtHiKMOecY3_l2E
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇩🇪 LTE | Play2go | #44"
+    type: vless
+    server: 94.156.115.171
+    port: 443
+    uuid: 754d58c1-5f2b-4e39-9338-bf40dff8e159
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: deepl.com
+    reality-opts:
+      public-key: vnjp7zIK2H3CGdjSis_79KXqS6IG-opmpbETPUD-EC8
+      short-id: 15affa0af66dfc79
+    client-fingerprint: chrome
+  - name: "🇪🇪 LTE | OC | #45"
+    type: vless
+    server: 95.85.224.240
+    port: 443
+    uuid: 120a8f6c-3829-4c0f-806f-9477b13eeaa0
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: m.vkvideo.cs7777.vk.ru
+    reality-opts:
+      public-key: dfpjZXFTymcxlvi1QnQwuja8AVmTBtHiKMOecY3_l2E
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | LLC | #46"
+    type: vless
+    server: 95.163.183.5
+    port: 7443
+    uuid: d19c562c-61ff-44a3-861c-273add2e14f8
+    udp: true
+    tls: true
+    servername: ads.x5.ru
+    reality-opts:
+      public-key: 8hdXyv-YBQIaA2xgOfT2nhfna5y5s19qbZD-SpMZ6hg
+      short-id: dd700a46e27751d1
+    client-fingerprint: qq
+    network: grpc
+    grpc-opts:
+      grpc-service-name: UpdateService
+  - name: "🇩🇪 LTE | Play2go | #47"
+    type: vless
+    server: 89.34.219.252
+    port: 443
+    uuid: 754d58c1-5f2b-4e39-9338-bf40dff8e159
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: deepl.com
+    reality-opts:
+      public-key: vnjp7zIK2H3CGdjSis_79KXqS6IG-opmpbETPUD-EC8
+      short-id: 15affa0af66dfc79
+    client-fingerprint: chrome
+  - name: "🇫🇷 LTE | Aeza | #48"
+    type: vless
+    server: 95.163.152.83
+    port: 443
+    uuid: 1034a55b-ea7e-4a96-a7fa-d7cae5ab5523
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: autotuojat.fi
+    reality-opts:
+      public-key: ExkbbVbDnjp9RRcjSVbUzrkKnq78gL5KPOIJFAwXdXY
+      short-id: 977198bfb51105
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | LLC | #49"
+    type: vless
+    server: 83.166.254.121
+    port: 9880
+    uuid: b59cf03c-704f-44b0-b329-d3443e860481
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: www.id.vk.ru
+    reality-opts:
+      public-key: im7-98zxWz_OGimQfeoN_Y5p1tAy8KoZCxOe2wOeWS4
+      short-id: ""
+    client-fingerprint: qq
+  - name: "🇷🇺 Сервер | JSC | #50"
+    type: vless
+    server: 94.228.124.183
+    port: 443
+    uuid: 541e29bd-d3de-4f1e-b555-6ac2ed8813b2
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: ""
+    skip-cert-verify: true
+  - name: "🇩🇪 LTE | Play2go | #51"
+    type: vless
+    server: 94.103.169.73
+    port: 443
+    uuid: 754d58c1-5f2b-4e39-9338-bf40dff8e159
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: deepl.com
+    reality-opts:
+      public-key: vnjp7zIK2H3CGdjSis_79KXqS6IG-opmpbETPUD-EC8
+      short-id: 15affa0af66dfc79
+    client-fingerprint: chrome
+  - name: "🇷🇺 Сервер | vds | #52"
+    type: vless
+    server: 89.223.120.181
+    port: 443
+    uuid: 541e29bd-d3de-4f1e-b555-6ac2ed8813b2
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: ""
+    skip-cert-verify: true
+  - name: "🇳🇱 LTE | EUROBYTE | #53"
+    type: vless
+    server: 46.30.46.161
+    port: 443
+    uuid: 0bbe589a-620e-47b9-a615-60bda9903f31
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: nlx1.braidpro.online
+    reality-opts:
+      public-key: 45Hmp5iW7pQJTt_0BDLBemuZDy4r8_txF2DshyqUE2Y
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | LLC | #54"
+    type: vless
+    server: 79.137.175.228
+    port: 8443
+    uuid: aabcb0bd-0af7-4d6b-8fef-b625c7f82684
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: rbc.ru
+    reality-opts:
+      public-key: 7zd9mJilgjOrg_ohtw23Vmio-pdnYqeP_r-kiWt87Cg
+      short-id: 2715592069f36fe7
+    client-fingerprint: random
+  - name: "🇩🇪 LTE | Play2go | #55"
+    type: vless
+    server: 89.34.219.109
+    port: 443
+    uuid: 754d58c1-5f2b-4e39-9338-bf40dff8e159
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: deepl.com
+    reality-opts:
+      public-key: vnjp7zIK2H3CGdjSis_79KXqS6IG-opmpbETPUD-EC8
+      short-id: 15affa0af66dfc79
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | Yandex | #56"
+    type: vless
+    server: 84.201.189.43
+    port: 443
+    uuid: 6a9f301c-1e7b-4174-874d-1f7a35aa99fa
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: 5post-gate.x5.ru
+    reality-opts:
+      public-key: Z0QdxxUoV3nbgTWWtTehxOHh9_oU0W5Pw9Pi46cIcD8
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | LLC | #57"
+    type: vless
+    server: 89.208.229.48
+    port: 443
+    uuid: 3f39d740-88cc-45c8-a23c-1b382cf4efc6
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: st.ozone.ru
+    reality-opts:
+      public-key: qoJPqQ4RYYGOs6TQ3N_A_WnsnxCfAg6sfQXlr51jKVY
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇩🇪 LTE | Play2go | #58"
+    type: vless
+    server: 94.156.112.37
+    port: 443
+    uuid: 754d58c1-5f2b-4e39-9338-bf40dff8e159
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: deepl.com
+    reality-opts:
+      public-key: vnjp7zIK2H3CGdjSis_79KXqS6IG-opmpbETPUD-EC8
+      short-id: 15affa0af66dfc79
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | LLC | #59"
+    type: vless
+    server: 85.192.35.178
+    port: 443
+    uuid: 85697717-7346-43c6-8fc0-6b2f9b4a10a1
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: yandex.ru
+    reality-opts:
+      public-key: WrPShaEtQUXeKeyWDuELzBsd_ygDsU-k2bL1Avi13xI
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | Yandex.Cloud | #60"
+    type: vless
+    server: 51.250.4.166
+    port: 443
+    uuid: 120a8f6c-3829-4c0f-806f-9477b13eeaa0
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: yandex.ru
+    reality-opts:
+      public-key: WrPShaEtQUXeKeyWDuELzBsd_ygDsU-k2bL1Avi13xI
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | EdgeCenter | #61"
+    type: vless
+    server: 5.188.224.191
+    port: 52809
+    uuid: 5c1aa0fb-a26c-4649-bc1d-1da3ab14a222
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: max.ru
+    reality-opts:
+      public-key: nPDGL3SzkfBu3yN1nFo4Cnkvb_vOBiYAw2vm_BdZ9Fk
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇫🇷 LTE | Aeza | #62"
+    type: vless
+    server: 89.208.97.50
+    port: 443
+    uuid: 1bc8a2e7-4c5d-4376-a24b-b877997fd997
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: www.google.com
+    reality-opts:
+      public-key: AQhB5LgVFJq87Kbavc9qYWwqYYnGx0Bj0ci4TXcboDw
+      short-id: a1b2c3d4
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | Citytelecom | #63"
+    type: vless
+    server: 62.152.59.140
+    port: 443
+    uuid: 7d78652e-4ec5-4ab9-b7bd-bb4ff1e8a976
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: sso.passport.yandex.ru
+    reality-opts:
+      public-key: AiG06E-jizo9xtBbulKQvdQqhZfobZJBTQIKkaDjaiU
+      short-id: a1b2c3d4e5
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | LLC | #64"
+    type: vless
+    server: 95.163.183.5
+    port: 443
+    uuid: c72dc9f9-c6f2-4273-9f84-ffcf4c246771
+    udp: true
+    tls: true
+    servername: eh.vk.com
+    reality-opts:
+      public-key: _oEGDYSSHrqmbHEUoHbp6YnmNTcXTVdWXcDmpi3JdH0
+      short-id: aefbcf7fc283bd55
+    client-fingerprint: chrome
+    network: grpc
+    grpc-opts:
+      grpc-service-name: UpdateService
+  - name: "🇷🇺 LTE | Citytelecom | #65"
+    type: vless
+    server: 62.152.59.98
+    port: 443
+    uuid: 6c9e8424-e143-4598-b64a-1981d7d011ab
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: smartcaptcha.yandexcloud.net
+    reality-opts:
+      public-key: 1vSZjvhZO01oAEH3b7eebR1qF5dLU1Dq2E7xu8pwGSs
+      short-id: 428ef87fd47a3a32
+    client-fingerprint: qq
+  - name: "🇷🇺 LTE | LLC | #66"
+    type: vless
+    server: 89.208.231.170
+    port: 443
+    uuid: 6c9e8424-e143-4598-b64a-1981d7d011ab
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: api-maps.yandex.ru
+    reality-opts:
+      public-key: 1vSZjvhZO01oAEH3b7eebR1qF5dLU1Dq2E7xu8pwGSs
+      short-id: 428ef87fd47a3a32
+    client-fingerprint: qq
+  - name: "🇷🇺 Сервер | JSC | #67"
+    type: vless
+    server: 5.42.220.177
+    port: 443
+    uuid: 541e29bd-d3de-4f1e-b555-6ac2ed8813b2
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: ru.great-server-list.co.uk
+    skip-cert-verify: true
+  - name: "🇷🇺 LTE | JSC | #68"
+    type: vless
+    server: 5.129.223.6
+    port: 9893
+    uuid: b59cf03c-704f-44b0-b329-d3443e860481
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: id.vk.ru
+    reality-opts:
+      public-key: im7-98zxWz_OGimQfeoN_Y5p1tAy8KoZCxOe2wOeWS4
+      short-id: ""
+    client-fingerprint: qq
+  - name: "🇷🇺 LTE | BlueVPS | #69"
+    type: vless
+    server: 85.239.54.119
+    port: 9877
+    uuid: b59cf03c-704f-44b0-b329-d3443e860481
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: www.io.ozone.ru
+    reality-opts:
+      public-key: im7-98zxWz_OGimQfeoN_Y5p1tAy8KoZCxOe2wOeWS4
+      short-id: ""
+    client-fingerprint: qq
+  - name: "🇷🇺 LTE | Yandex.Cloud | #70"
+    type: vless
+    server: 84.252.143.239
+    port: 443
+    uuid: 120a8f6c-3829-4c0f-806f-9477b13eeaa0
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: yandex.ru
+    reality-opts:
+      public-key: CF49-iS9dsHBwvqYFoDs_T3Me8TT0FpNW2kibGBkVXY
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇳🇱 LTE | Play2go | #71"
+    type: vless
+    server: 45.84.222.30
+    port: 443
+    uuid: 20754351-4150-4a99-b900-e46e966b2434
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: eh.vk.com
+    reality-opts:
+      public-key: 0RW5P5qI5sej7PwhLixMUlClXpK-be1TLHKInhMhmh8
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | Yandex.Cloud | #72"
+    type: vless
+    server: 51.250.72.86
+    port: 443
+    uuid: d2b276db-7a90-498f-8d2b-5d7dc6ab30c9
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: max.ru
+    reality-opts:
+      public-key: fJw3vtVu2P_brJfxCrOJP9qcCtSPlvixYe1k3h2_sXk
+      short-id: a6731b44e74de185
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | LLC | #73"
+    type: vless
+    server: 90.156.212.53
+    port: 443
+    uuid: 95557ad5-5d90-4f80-a1e2-a72fda60ca4b
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: 360.yandex.ru
+    reality-opts:
+      public-key: V5SUdzTFbwv51a-l6f3EwLhiGzqd7i9RIbSscV5cAlg
+      short-id: 524669466717d4
+    client-fingerprint: qq
+  - name: "🇷🇺 LTE | LLC | #74"
+    type: vless
+    server: 90.156.213.51
+    port: 443
+    uuid: d65f18c3-94a3-4a19-b08d-e5e39faf21c6
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: eh.vk.com
+    reality-opts:
+      public-key: rtRozf164NFfhPwSgJhFNvSFjPQzebpCSFlQQJpC6Tk
+      short-id: ""
+    client-fingerprint: randomized
+  - name: "🇷🇺 Сервер | JSC | #75"
+    type: vless
+    server: 94.198.217.83
+    port: 443
+    uuid: 541e29bd-d3de-4f1e-b555-6ac2ed8813b2
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: ru.great-server-list.co.uk
+    skip-cert-verify: true
+  - name: "🇷🇺 LTE | Yandex | #76"
+    type: vless
+    server: 84.201.134.192
+    port: 443
+    uuid: 6c9e8424-e143-4598-b64a-1981d7d011ab
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: ads.x5.ru
+    reality-opts:
+      public-key: 1vSZjvhZO01oAEH3b7eebR1qF5dLU1Dq2E7xu8pwGSs
+      short-id: 428ef87fd47a3a32
+    client-fingerprint: qq
+  - name: "🇷🇺 LTE | LLC | #77"
+    type: vless
+    server: 90.156.212.155
+    port: 443
+    uuid: 0eca1f22-e5a1-4888-a0fa-c2345e87cf2f
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: cdnv-img.perekrestok.ru
+    reality-opts:
+      public-key: MNbAG72pXVO11PRzMRw7puKjDnmkig2mvEmdjow53Wc
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | Reg.Ru | #78"
+    type: vless
+    server: 79.174.90.201
+    port: 443
+    uuid: 6c9e8424-e143-4598-b64a-1981d7d011ab
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: ads.x5.ru
+    reality-opts:
+      public-key: 1vSZjvhZO01oAEH3b7eebR1qF5dLU1Dq2E7xu8pwGSs
+      short-id: 428ef87fd47a3a32
+    client-fingerprint: qq
+  - name: "🇷🇺 LTE | Yandex | #79"
+    type: vless
+    server: 84.201.178.109
+    port: 8443
+    uuid: 435c03fd-f139-4a9a-9516-74fa81d983d1
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: api-maps.yandex.ru
+    reality-opts:
+      public-key: AWXV0vrwk2dEVibYa-7zWBhEPPNIZmQO6w-N4XPjeDU
+      short-id: 0f4dacf08712e45f
+    client-fingerprint: qq
+  - name: "🇷🇺 LTE | Yandex | #80"
+    type: vless
+    server: 84.201.157.251
+    port: 443
+    uuid: 6c9e8424-e143-4598-b64a-1981d7d011ab
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: ads.x5.ru
+    reality-opts:
+      public-key: 1vSZjvhZO01oAEH3b7eebR1qF5dLU1Dq2E7xu8pwGSs
+      short-id: 428ef87fd47a3a32
+    client-fingerprint: qq
+  - name: "🇷🇺 Сервер | JSC | #81"
+    type: vless
+    server: 92.255.76.176
+    port: 443
+    uuid: 541e29bd-d3de-4f1e-b555-6ac2ed8813b2
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: nl.great-server-list.co.uk
+    skip-cert-verify: true
+  - name: "🇷🇺 LTE | JSC | #82"
+    type: vless
+    server: 31.130.135.61
+    port: 443
+    uuid: 5b77fb18-cece-4759-9a81-571f1be53e0c
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: msk3.frostbot.ru
+    reality-opts:
+      public-key: jdua-L9jgUfUe_7lPh72TV4JJALvOmdwH68C8pMP8RQ
+      short-id: fe
+    client-fingerprint: random
+  - name: "🇷🇺 LTE | JSC | #83"
+    type: vless
+    server: 5.42.113.242
+    port: 443
+    uuid: 8a6dc872-4b44-41ec-9559-36a7e23b51e4
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: ru02-time.spliceflowtech.com
+    reality-opts:
+      public-key: UJm-CbvVj8YSqy1v-iIZkmjWzC6NEZlThTuG5mO5anU
+      short-id: 3d8a1c7f5e2b9460
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | UFO | #84"
+    type: vless
+    server: 2.56.178.124
+    port: 443
+    uuid: 81d82277-c095-4613-ba51-cafd0e413e69
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: eh.vk.com
+    reality-opts:
+      public-key: CaUiCF3-CEZbL9fLFVL9g12qcrKMX1FW4Qe7EsASPUY
+      short-id: 3d9a1c7f5e2b8460
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | Yandex.Cloud | #85"
+    type: vless
+    server: 51.250.98.34
+    port: 443
+    uuid: a3343f13-4288-4ae7-8bfd-0a2b0b3daccf
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: wl-6-2.legendary-vpn.com
+    reality-opts:
+      public-key: HHmhCp_qS_hIgIniZwaNwqI5CFH2_QmES4dFO41BRWo
+      short-id: 64038de1ca7aad86
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | Yandex | #86"
+    type: vless
+    server: 84.201.144.113
+    port: 443
+    uuid: 85697717-7346-43c6-8fc0-6b2f9b4a10a1
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: yandex.ru
+    reality-opts:
+      public-key: WrPShaEtQUXeKeyWDuELzBsd_ygDsU-k2bL1Avi13xI
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | Yandex.Cloud | #87"
     type: vless
     server: 51.250.14.105
     port: 14443
@@ -492,281 +1131,7 @@ proxies:
     network: grpc
     grpc-opts:
       grpc-service-name: admin
-  - name: "🇷🇺 LTE | Citytelecom | #38"
-    type: vless
-    server: 62.152.59.140
-    port: 443
-    uuid: 7d78652e-4ec5-4ab9-b7bd-bb4ff1e8a976
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: sso.passport.yandex.ru
-    reality-opts:
-      public-key: AiG06E-jizo9xtBbulKQvdQqhZfobZJBTQIKkaDjaiU
-      short-id: a1b2c3d4e5
-    client-fingerprint: chrome
-  - name: "🇱🇻 LTE | RETN | #39"
-    type: vless
-    server: 45.145.163.115
-    port: 39771
-    uuid: e5bd3d75-06b3-490e-9651-930b1dc29cdb
-    udp: true
-    tls: true
-    servername: yahoo.com
-    reality-opts:
-      public-key: GMnXK7wz7qTo_IFmPy--pQcODPhYJG_CLaY2Sh4fTCI
-      short-id: 33f2
-    client-fingerprint: qq
-  - name: "🇷🇺 LTE | Yandex.Cloud | #40"
-    type: vless
-    server: 51.250.7.185
-    port: 8081
-    uuid: eb209abb-944d-4a36-9d74-5629470825e0
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: ads.x5.ru
-    reality-opts:
-      public-key: QHkXBS2ENHV0khgY9VBYi8_9bpfqnUYDcfQN4cW5Qg0
-      short-id: 4326
-    client-fingerprint: edge
-  - name: "🇷🇺 Сервер | JSC | #41"
-    type: vless
-    server: 5.42.220.177
-    port: 443
-    uuid: 541e29bd-d3de-4f1e-b555-6ac2ed8813b2
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: ru.great-server-list.co.uk
-    skip-cert-verify: true
-  - name: "🌐 LTE | vl.itg.top | #42"
-    type: vless
-    server: vl.itg.top
-    port: 16443
-    uuid: efef9202-923f-4578-9ca0-ce47ea27e84d
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.vk.com
-    reality-opts:
-      public-key: v6sOj7ABI1e8cRyM65n7C19HH1Ocl3T1GC6UzJo0dTI
-      short-id: 5d111e857e8f99
-    client-fingerprint: firefox
-  - name: "🌐 LTE | ds.itg.top | #43"
-    type: vless
-    server: ds.itg.top
-    port: 443
-    uuid: efef9202-923f-4578-9ca0-ce47ea27e84d
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: max.ru
-    reality-opts:
-      public-key: c1N9wTbzVQUhO5ZvXRoqE2gFj4C-RcjiJKct1uns0Tk
-      short-id: 1e
-    client-fingerprint: qq
-  - name: "🇷🇺 LTE | Yandex.Cloud | #44"
-    type: vless
-    server: 51.250.98.34
-    port: 443
-    uuid: 8648c51c-42b8-47cf-940c-95ee0afdd4ba
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: wl-6-2.legendary-vpn.com
-    reality-opts:
-      public-key: HHmhCp_qS_hIgIniZwaNwqI5CFH2_QmES4dFO41BRWo
-      short-id: 64038de1ca7aad86
-    client-fingerprint: chrome
-  - name: "🇫🇮 LTE | H2nexus | #45"
-    type: vless
-    server: 85.192.49.230
-    port: 443
-    uuid: 8de7627c-1995-41f7-93e6-7fd9715514a2
-    udp: true
-    tls: true
-    servername: www.google.com
-    reality-opts:
-      public-key: VMMc3QkOG66O2cD0Ki36VOEDQxpGT5aK8KAwLGklJzw
-      short-id: c2
-    client-fingerprint: random
-  - name: "🇷🇺 LTE | LLC | #46"
-    type: vless
-    server: 5.188.140.166
-    port: 443
-    uuid: deda2e02-e111-4070-b1b9-4ec34f8b2b11
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: st.ozone.ru
-    reality-opts:
-      public-key: qoJPqQ4RYYGOs6TQ3N_A_WnsnxCfAg6sfQXlr51jKVY
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | EdgeCenter | #47"
-    type: vless
-    server: 5.188.224.191
-    port: 52809
-    uuid: 5c1aa0fb-a26c-4649-bc1d-1da3ab14a222
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: max.ru
-    reality-opts:
-      public-key: nPDGL3SzkfBu3yN1nFo4Cnkvb_vOBiYAw2vm_BdZ9Fk
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | Yandex.Cloud | #48"
-    type: vless
-    server: 51.250.72.86
-    port: 443
-    uuid: d2b276db-7a90-498f-8d2b-5d7dc6ab30c9
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: max.ru
-    reality-opts:
-      public-key: fJw3vtVu2P_brJfxCrOJP9qcCtSPlvixYe1k3h2_sXk
-      short-id: a6731b44e74de185
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | LLC | #49"
-    type: vless
-    server: 89.208.229.48
-    port: 443
-    uuid: deda2e02-e111-4070-b1b9-4ec34f8b2b11
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: st.ozone.ru
-    reality-opts:
-      public-key: qoJPqQ4RYYGOs6TQ3N_A_WnsnxCfAg6sfQXlr51jKVY
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | TimeWeb | #50"
-    type: vless
-    server: 92.53.120.191
-    port: 443
-    uuid: 809539ab-6f4e-4257-9c4c-614a68f065e7
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: goodcardboard.shop
-    reality-opts:
-      public-key: rDPZZOBMmBb_mNKPEewzp9Uu6zkGrP7XOVpnRzetXDc
-      short-id: ""
-    client-fingerprint: randomized
-  - name: "🇷🇺 Сервер | JSC | #51"
-    type: vless
-    server: 94.228.124.183
-    port: 443
-    uuid: 541e29bd-d3de-4f1e-b555-6ac2ed8813b2
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: ""
-    skip-cert-verify: true
-  - name: "🇷🇺 Сервер | vds | #52"
-    type: vless
-    server: 89.223.120.181
-    port: 443
-    uuid: 541e29bd-d3de-4f1e-b555-6ac2ed8813b2
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: ""
-    skip-cert-verify: true
-  - name: "🇷🇺 LTE | Yandex.Cloud | #53"
-    type: vless
-    server: 51.250.126.235
-    port: 443
-    uuid: 50e5dbb7-be12-4964-b921-d03f1e2f25b7
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: tunnel.vk-apps.com
-    reality-opts:
-      public-key: tEduQabQ5YS0EPkXDIRMAuns068ZfzBlCrry4JS2MVs
-      short-id: 68d6237c
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | Yandex.Cloud | #54"
-    type: vless
-    server: 51.250.87.12
-    port: 443
-    uuid: d2b276db-7a90-498f-8d2b-5d7dc6ab30c9
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: max.ru
-    reality-opts:
-      public-key: fJw3vtVu2P_brJfxCrOJP9qcCtSPlvixYe1k3h2_sXk
-      short-id: a6731b44e74de185
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | BlueVPS | #55"
-    type: vless
-    server: 85.239.54.119
-    port: 9877
-    uuid: b59cf03c-704f-44b0-b329-d3443e860481
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.io.ozone.ru
-    reality-opts:
-      public-key: im7-98zxWz_OGimQfeoN_Y5p1tAy8KoZCxOe2wOeWS4
-      short-id: ""
-    client-fingerprint: qq
-  - name: "🇷🇺 LTE | LLC | #56"
-    type: vless
-    server: 90.156.212.53
-    port: 443
-    uuid: 95557ad5-5d90-4f80-a1e2-a72fda60ca4b
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: 360.yandex.ru
-    reality-opts:
-      public-key: V5SUdzTFbwv51a-l6f3EwLhiGzqd7i9RIbSscV5cAlg
-      short-id: 524669466717d4
-    client-fingerprint: qq
-  - name: "🇷🇺 LTE | Yandex.Cloud | #57"
-    type: vless
-    server: 51.250.24.171
-    port: 4443
-    uuid: 37c2dec2-0831-42d4-ac4e-53f4959260b0
-    udp: true
-    tls: true
-    servername: max.ru
-    reality-opts:
-      public-key: AZDTIuFYkuSXYWnHFLxFpzWM5wenXFv3zSJ3183DCjQ
-      short-id: bc0f9a1781b7ba
-    client-fingerprint: qq
-  - name: "🇳🇱 LTE | Play2go | #58"
-    type: vless
-    server: 45.84.222.30
-    port: 443
-    uuid: 20754351-4150-4a99-b900-e46e966b2434
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: eh.vk.com
-    reality-opts:
-      public-key: 0RW5P5qI5sej7PwhLixMUlClXpK-be1TLHKInhMhmh8
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🇫🇷 LTE | Aeza | #59"
-    type: vless
-    server: 95.163.152.83
-    port: 443
-    uuid: 1034a55b-ea7e-4a96-a7fa-d7cae5ab5523
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: autotuojat.fi
-    reality-opts:
-      public-key: ExkbbVbDnjp9RRcjSVbUzrkKnq78gL5KPOIJFAwXdXY
-      short-id: 977198bfb51105
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | LLC | #60"
+  - name: "🇷🇺 LTE | LLC | #88"
     type: vless
     server: 84.23.54.186
     port: 9887
@@ -779,46 +1144,58 @@ proxies:
       public-key: im7-98zxWz_OGimQfeoN_Y5p1tAy8KoZCxOe2wOeWS4
       short-id: ""
     client-fingerprint: qq
-  - name: "🇷🇺 LTE | Yandex.Cloud | #61"
+  - name: "🇷🇺 LTE | Yandex.Cloud | #89"
     type: vless
-    server: 51.250.111.137
-    port: 443
-    uuid: d2b276db-7a90-498f-8d2b-5d7dc6ab30c9
+    server: 51.250.7.185
+    port: 8081
+    uuid: eb209abb-944d-4a36-9d74-5629470825e0
     udp: true
     flow: xtls-rprx-vision
+    tls: true
+    servername: ads.x5.ru
+    reality-opts:
+      public-key: QHkXBS2ENHV0khgY9VBYi8_9bpfqnUYDcfQN4cW5Qg0
+      short-id: 4326
+    client-fingerprint: edge
+  - name: "🇷🇺 LTE | JSC | #90"
+    type: vless
+    server: 91.222.236.224
+    port: 443
+    uuid: 8ae7b082-8ada-4352-a66e-c0ab7e48d3ed
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: m.vk.ru
+    reality-opts:
+      public-key: 3JLrOA21KOD2Pd6B6YifuJaZkzH8qL9okJh8cvX7R0M
+      short-id: 8ac77e6b777376c8
+    client-fingerprint: random
+  - name: "🇷🇺 LTE | Moscow | #91"
+    type: vless
+    server: 90.156.214.135
+    port: 443
+    uuid: 120a8f6c-3829-4c0f-806f-9477b13eeaa0
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: yandex.ru
+    reality-opts:
+      public-key: WrPShaEtQUXeKeyWDuELzBsd_ygDsU-k2bL1Avi13xI
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | Yandex.Cloud | #92"
+    type: vless
+    server: 51.250.24.171
+    port: 4443
+    uuid: 37c2dec2-0831-42d4-ac4e-53f4959260b0
+    udp: true
     tls: true
     servername: max.ru
     reality-opts:
-      public-key: fJw3vtVu2P_brJfxCrOJP9qcCtSPlvixYe1k3h2_sXk
-      short-id: a6731b44e74de185
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | JSC | #62"
-    type: vless
-    server: 90.156.209.81
-    port: 443
-    uuid: 873c0bbb-10e6-4166-a050-5c6ead07b1c9
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: goodcardboard.shop
-    reality-opts:
-      public-key: rDPZZOBMmBb_mNKPEewzp9Uu6zkGrP7XOVpnRzetXDc
-      short-id: ""
-    client-fingerprint: randomized
-  - name: "🇳🇱 LTE | Servers | #63"
-    type: vless
-    server: 89.124.77.162
-    port: 443
-    uuid: 6d0e9ded-d23d-4ffb-b165-7bc757be84d3
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: sun6-21.userapi.com
-    reality-opts:
-      public-key: 8iEloJudtgXA0pTiSgFnq0quKAVHjnqm9r3TClydlCM
-      short-id: 0bffe935818e6964
-    client-fingerprint: ios
-  - name: "🇷🇺 LTE | JSC | #64"
+      public-key: AZDTIuFYkuSXYWnHFLxFpzWM5wenXFv3zSJ3183DCjQ
+      short-id: bc0f9a1781b7ba
+    client-fingerprint: qq
+  - name: "🇷🇺 LTE | JSC | #93"
     type: vless
     server: 5.129.253.197
     port: 443
@@ -830,39 +1207,11 @@ proxies:
       public-key: oamDaDcahf4RryIL9GrUO8qBOy1uekh2z5d-c-sjszE
       short-id: dc
     client-fingerprint: random
-  - name: "🇳🇱 LTE | EUROBYTE | #65"
-    type: vless
-    server: 46.30.46.161
-    port: 443
-    uuid: 0bbe589a-620e-47b9-a615-60bda9903f31
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: nlx1.braidpro.online
-    reality-opts:
-      public-key: 45Hmp5iW7pQJTt_0BDLBemuZDy4r8_txF2DshyqUE2Y
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | "Domain | #66"
-    type: vless
-    server: 79.174.95.163
-    port: 2083
-    uuid: c72dc9f9-c6f2-4273-9f84-ffcf4c246771
-    udp: true
-    tls: true
-    servername: ads.x5.ru
-    reality-opts:
-      public-key: J6NuOlIq3ypdTFc1TMhDDKmF8BWPnNWZq1EkxD7K-lQ
-      short-id: 6da16b1335651b38
-    client-fingerprint: random
-    network: grpc
-    grpc-opts:
-      grpc-service-name: UpdateService
-  - name: "🇷🇺 LTE | JSC | #67"
+  - name: "🇷🇺 LTE | JSC | #94"
     type: vless
     server: 46.149.68.27
     port: 2083
-    uuid: e11ca047-3e50-469b-aa1a-beb9be0256b2
+    uuid: 418ad4b9-d8be-447c-953d-e666fb154685
     udp: true
     tls: true
     servername: ir.ozone.ru
@@ -873,50 +1222,20 @@ proxies:
     network: grpc
     grpc-opts:
       grpc-service-name: UpdateService
-  - name: "🌐 LTE | at.pfvpn.cfd | #68"
+  - name: "🇷🇺 LTE | Yandex | #95"
     type: vless
-    server: at.pfvpn.cfd
-    port: 1443
-    uuid: 0642ee71-53ad-403b-a210-97782ed3d94c
-    udp: true
-    tls: true
-    servername: yandex.ru
-    reality-opts:
-      public-key: asw-c8jLA8GT6tydb7teY46doPq-silOzQUFUkERxh0
-      short-id: 80e0
-    client-fingerprint: chrome
-    network: grpc
-    grpc-opts:
-      grpc-service-name: yandex.ru
-  - name: "🌐 LTE | ru.appav.net | #69"
-    type: vless
-    server: ru.appav.net
-    port: 2083
-    uuid: 3de26259-e6b4-4b22-af75-2f473d548e94
-    udp: true
-    tls: true
-    servername: goya.rutube.ru
-    reality-opts:
-      public-key: J6NuOlIq3ypdTFc1TMhDDKmF8BWPnNWZq1EkxD7K-lQ
-      short-id: 6da16b1335651b38
-    client-fingerprint: qq
-    network: grpc
-    grpc-opts:
-      grpc-service-name: UpdateService
-  - name: "🇷🇺 LTE | Selectel | #70"
-    type: vless
-    server: 5.188.115.7
-    port: 666
-    uuid: 04315539-f579-4873-a9b5-3f06d0ca6571
+    server: 84.201.173.63
+    port: 443
+    uuid: 4327a67f-c2f9-4664-942c-eaa94aef9243
     udp: true
     flow: xtls-rprx-vision
     tls: true
     servername: ads.x5.ru
     reality-opts:
-      public-key: pgG2grngQEtOFJImLfz0AEm-O2IodM2jCY4aMCYQI1U
-      short-id: b2a6e3d42f05c3d1
-    client-fingerprint: random
-  - name: "🇺🇸 LTE | Fast | #71"
+      public-key: r5WB5FnSCt4eeBC1FJMfkWHbzsMuabo0Rc6wuAhlZUs
+      short-id: 672ff0
+    client-fingerprint: chrome
+  - name: "🇺🇸 LTE | Fast | #96"
     type: vless
     server: 45.86.74.85
     port: 852
@@ -929,510 +1248,33 @@ proxies:
       public-key: FoCmMBurpqNaVQWlRvyuS1um0ftKxXMnnKNbnHpe-G8
       short-id: ""
     client-fingerprint: random
-  - name: "🇫🇷 LTE | Aeza | #72"
+  - name: "🇷🇺 LTE | Yandex.Cloud | #97"
     type: vless
-    server: 89.208.97.50
+    server: 51.250.14.68
     port: 443
-    uuid: 1bc8a2e7-4c5d-4376-a24b-b877997fd997
+    uuid: 6c9e8424-e143-4598-b64a-1981d7d011ab
     udp: true
     flow: xtls-rprx-vision
     tls: true
-    servername: www.google.com
+    servername: api-maps.yandex.ru
     reality-opts:
-      public-key: AQhB5LgVFJq87Kbavc9qYWwqYYnGx0Bj0ci4TXcboDw
-      short-id: a1b2c3d4
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | LLC | #73"
-    type: vless
-    server: 90.156.212.155
-    port: 443
-    uuid: 0eca1f22-e5a1-4888-a0fa-c2345e87cf2f
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: cdnv-img.perekrestok.ru
-    reality-opts:
-      public-key: MNbAG72pXVO11PRzMRw7puKjDnmkig2mvEmdjow53Wc
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | LLC | #74"
-    type: vless
-    server: 83.166.254.121
-    port: 9880
-    uuid: b59cf03c-704f-44b0-b329-d3443e860481
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.id.vk.ru
-    reality-opts:
-      public-key: im7-98zxWz_OGimQfeoN_Y5p1tAy8KoZCxOe2wOeWS4
-      short-id: ""
+      public-key: 1vSZjvhZO01oAEH3b7eebR1qF5dLU1Dq2E7xu8pwGSs
+      short-id: 428ef87fd47a3a32
     client-fingerprint: qq
-  - name: "🇷🇺 LTE | LLC | #75"
+  - name: "🇷🇺 LTE | LLC | #98"
     type: vless
-    server: 90.156.212.138
+    server: 5.188.140.166
     port: 443
-    uuid: 0eca1f22-e5a1-4888-a0fa-c2345e87cf2f
+    uuid: 3f39d740-88cc-45c8-a23c-1b382cf4efc6
     udp: true
     flow: xtls-rprx-vision
     tls: true
-    servername: cdnv-img.perekrestok.ru
+    servername: st.ozone.ru
     reality-opts:
-      public-key: MNbAG72pXVO11PRzMRw7puKjDnmkig2mvEmdjow53Wc
-      short-id: ""
-    client-fingerprint: safari
-  - name: "🇷🇺 LTE | JSC | #76"
-    type: vless
-    server: 2.59.42.204
-    port: 443
-    uuid: 01cf5d72-fa09-4e34-948d-3adb2c3ee13b
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: goodcardboard.shop
-    reality-opts:
-      public-key: rDPZZOBMmBb_mNKPEewzp9Uu6zkGrP7XOVpnRzetXDc
-      short-id: ""
-    client-fingerprint: randomized
-  - name: "🇷🇺 LTE | Moscow | #77"
-    type: vless
-    server: 90.156.215.37
-    port: 9443
-    uuid: b59cf03c-704f-44b0-b329-d3443e860481
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.io.ozone.ru
-    reality-opts:
-      public-key: im7-98zxWz_OGimQfeoN_Y5p1tAy8KoZCxOe2wOeWS4
-      short-id: ""
-    client-fingerprint: qq
-  - name: "🇷🇺 LTE | LLC | #78"
-    type: vless
-    server: 90.156.213.51
-    port: 443
-    uuid: 873c0bbb-10e6-4166-a050-5c6ead07b1c9
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: sun6-22.userapi.com
-    reality-opts:
-      public-key: j0Hp0HkRW7dONTtryBlaKhq-R6b4Px1F84d4ENvGAio
-      short-id: ""
-    client-fingerprint: randomized
-  - name: "🇷🇺 LTE | LLC | #79"
-    type: vless
-    server: 95.163.210.78
-    port: 80
-    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.vkvideo.ru
-    reality-opts:
-      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
-      short-id: 44103f58
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | JSC | #80"
-    type: vless
-    server: 31.130.135.61
-    port: 443
-    uuid: 5b77fb18-cece-4759-9a81-571f1be53e0c
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: msk3.frostbot.ru
-    reality-opts:
-      public-key: jdua-L9jgUfUe_7lPh72TV4JJALvOmdwH68C8pMP8RQ
-      short-id: fe
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | JSC | #81"
-    type: vless
-    server: 90.156.209.66
-    port: 443
-    uuid: 01cf5d72-fa09-4e34-948d-3adb2c3ee13b
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: goodcardboard.shop
-    reality-opts:
-      public-key: rDPZZOBMmBb_mNKPEewzp9Uu6zkGrP7XOVpnRzetXDc
-      short-id: ""
-    client-fingerprint: randomized
-  - name: "🇷🇺 LTE | JSC | #82"
-    type: vless
-    server: 5.129.223.6
-    port: 9894
-    uuid: b59cf03c-704f-44b0-b329-d3443e860481
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.ya.ru
-    reality-opts:
-      public-key: im7-98zxWz_OGimQfeoN_Y5p1tAy8KoZCxOe2wOeWS4
-      short-id: ""
-    client-fingerprint: qq
-  - name: "🇷🇺 LTE | LLC | #83"
-    type: vless
-    server: 95.163.210.78
-    port: 8443
-    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
-    udp: true
-    tls: true
-    servername: www.vkvideo.ru
-    reality-opts:
-      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
-      short-id: 44103f58
-    client-fingerprint: chrome
-    network: http
-    http-opts:
-      path:
-        - /
-  - name: "🇷🇺 LTE | JSC | #84"
-    type: vless
-    server: 82.97.243.86
-    port: 443
-    uuid: 01cf5d72-fa09-4e34-948d-3adb2c3ee13b
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: goodcardboard.shop
-    reality-opts:
-      public-key: rDPZZOBMmBb_mNKPEewzp9Uu6zkGrP7XOVpnRzetXDc
-      short-id: ""
-    client-fingerprint: randomized
-  - name: "🇵🇱 LTE | Fast | #85"
-    type: vless
-    server: 45.15.128.183
-    port: 603
-    uuid: 4484eae9-e195-4adf-b2b5-ad0b9132162b
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.amd.com
-    reality-opts:
-      public-key: lWJaKBaMPs0NYHGCbfsrmn64R4juEQEvfmHNnL741Ek
-      short-id: ""
-    client-fingerprint: random
-  - name: "🇰🇿 LTE | Newserverlife | #86"
-    type: vless
-    server: 82.41.30.117
-    port: 443
-    uuid: 6d0e9ded-d23d-4ffb-b165-7bc757be84d3
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.google.com
-    reality-opts:
-      public-key: Omum9zbMxGvI6etKnAhjraVgEQ-6L6ot1j5sd9N-tnM
-      short-id: a2d4b99b898d74d1
-    client-fingerprint: ios
-  - name: "🇷🇺 LTE | LLC | #87"
-    type: vless
-    server: 95.163.210.78
-    port: 443
-    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.vkvideo.ru
-    reality-opts:
-      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
-      short-id: 44103f58
-    client-fingerprint: chrome
-  - name: "🇷🇺 Сервер | Delta | #88"
-    type: vless
-    server: 80.66.65.95
-    port: 443
-    uuid: 577b692c-387c-402f-8cb0-ad7c757691be
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: sub.sbrf-cdn342.ru
-    skip-cert-verify: true
-  - name: "🇷🇺 LTE | LLC | #89"
-    type: vless
-    server: 95.163.211.140
-    port: 80
-    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.vkvideo.ru
-    reality-opts:
-      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
-      short-id: 3f8ad1
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | LLC | #90"
-    type: vless
-    server: 95.163.211.140
-    port: 443
-    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.vkvideo.ru
-    reality-opts:
-      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
-      short-id: 2356d1ae4b
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | JSC | #91"
-    type: vless
-    server: 5.42.113.242
-    port: 443
-    uuid: 8a6dc872-4b44-41ec-9559-36a7e23b51e4
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: ru02-time.spliceflowtech.com
-    reality-opts:
-      public-key: UJm-CbvVj8YSqy1v-iIZkmjWzC6NEZlThTuG5mO5anU
-      short-id: 3d8a1c7f5e2b9460
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | Selectel | #92"
-    type: vless
-    server: 5.188.114.99
-    port: 80
-    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.rutube.ru
-    reality-opts:
-      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
-      short-id: 3f8ad1
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | Selectel | #93"
-    type: vless
-    server: 5.188.114.99
-    port: 8443
-    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
-    udp: true
-    tls: true
-    servername: www.rutube.ru
-    reality-opts:
-      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
-      short-id: 3f8ad1
-    client-fingerprint: chrome
-    network: http
-    http-opts:
-      path:
-        - /
-  - name: "🇷🇺 LTE | Selectel | #94"
-    type: vless
-    server: 5.188.114.99
-    port: 443
-    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.rutube.ru
-    reality-opts:
-      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
-      short-id: 44103f58
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | EdgeCenter | #95"
-    type: vless
-    server: 91.243.82.234
-    port: 443
-    uuid: b270dff1-fd2b-4940-b938-d7152eba5c23
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: event.yandex.ru
-    reality-opts:
-      public-key: Wt10I4MYfQ7UDOAaohWJqX8fp4KDfKA_cQNxNLtHhGQ
-      short-id: 119a6dde69d7
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | Citytelecom | #96"
-    type: vless
-    server: 62.152.59.132
-    port: 443
-    uuid: 7d78652e-4ec5-4ab9-b7bd-bb4ff1e8a976
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: smartcaptcha.yandexcloud.net
-    reality-opts:
-      public-key: AiG06E-jizo9xtBbulKQvdQqhZfobZJBTQIKkaDjaiU
-      short-id: a1b2c3d4e5
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | LLC | #97"
-    type: vless
-    server: 95.163.211.140
-    port: 8443
-    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
-    udp: true
-    tls: true
-    servername: www.vkvideo.ru
-    reality-opts:
-      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
-      short-id: 2356d1ae4b
-    client-fingerprint: chrome
-    network: http
-    http-opts:
-      path:
-        - /
-  - name: "🇫🇮 LTE | WAIcore | #98"
-    type: vless
-    server: 45.149.147.116
-    port: 542
-    uuid: 4484eae9-e195-4adf-b2b5-ad0b9132162b
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.amd.com
-    reality-opts:
-      public-key: wxca3IiavluCbB_wm-zxyrK3aVBxkgb3pu9BivBuqBQ
-      short-id: ""
-    client-fingerprint: random
-  - name: "🌐 LTE | ru-manage.node | #99"
-    type: vless
-    server: ru-manage.nodexphere.net
-    port: 443
-    uuid: 5ed71633-f82e-4def-b936-3283d20f321e
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: ru-manage.nodexphere.net
-    reality-opts:
-      public-key: lDbTuU4-pEAkxizbdrurcjz3eXq0AgECd0hEh0sL0zM
+      public-key: qoJPqQ4RYYGOs6TQ3N_A_WnsnxCfAg6sfQXlr51jKVY
       short-id: ""
     client-fingerprint: chrome
-  - name: "🇷🇺 LTE | Yandex.Cloud | #100"
-    type: vless
-    server: 51.250.83.149
-    port: 443
-    uuid: 29bc148d-1b35-4f55-ab57-92d45c743c64
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: ads.x5.ru
-    reality-opts:
-      public-key: SSR8qHHHwFhf-LHig6DhZFoglHdVdImR6upc5DcpmHI
-      short-id: ""
-    client-fingerprint: qq
-  - name: "🇹🇷 LTE | WorkTitans | #101"
-    type: vless
-    server: 45.12.143.232
-    port: 52001
-    uuid: 1c8a7a1a-e445-4dcd-b219-57e6d4ee5099
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: ya.ru
-    reality-opts:
-      public-key: 98GUVpWw96tdeGtjIOHXmkklpeA72qQQJoxxyfJ1yTo
-      short-id: 6ba85179
-    client-fingerprint: random
-  - name: "🌐 LTE | ca.sky-node.or | #102"
-    type: vless
-    server: ca.sky-node.org
-    port: 443
-    uuid: 78787b08-0747-48f8-9a02-8b8ac4833bdf
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: console.cloud.yandex.ru
-    reality-opts:
-      public-key: Ua80Sem5yHVDbRu37u1yYM5vWBzinhru__7ACrvnx1E
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | Hosting | #103"
-    type: vless
-    server: 91.142.72.83
-    port: 33569
-    uuid: 5755d19b-bb68-4e57-9793-2f3f6af228fd
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.cloudflare.com
-    reality-opts:
-      public-key: zF51s3Rq32F0LEZ1Rz19IOc1JaVMX7BH6YMqBnV2CyQ
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🌐 LTE | in-fi-he.ray-b | #104"
-    type: vless
-    server: in-fi-he.ray-balance.space
-    port: 443
-    uuid: 0eca1f22-e5a1-4888-a0fa-c2345e87cf2f
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: eh.vk.com
-    reality-opts:
-      public-key: Q2tOlk0AlcufziQD1uUzBzb8Y2a_0Jp1Dq2KCnC1Z08
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🇵🇱 LTE | Newserverlife | #105"
-    type: vless
-    server: 82.22.40.191
-    port: 59999
-    uuid: 5755d19b-bb68-4e57-9793-2f3f6af228fd
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: yastatic.net
-    reality-opts:
-      public-key: x0t1otRGBv62aJKGNbsQRJGtwh-sp6CEScFS6S8y3EM
-      short-id: 7c8d9e0f
-    client-fingerprint: chrome
-  - name: "🇷🇺 LTE | Hosting | #106"
-    type: vless
-    server: 89.110.94.231
-    port: 49800
-    uuid: 5755d19b-bb68-4e57-9793-2f3f6af228fd
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: yastatic.net
-    reality-opts:
-      public-key: 6iCYv2sUAaZoGL6iWT9-Qlp29cTAJCNI_RgCm3Wjwx0
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🌐 LTE | de.nitroo-tech | #107"
-    type: vless
-    server: de.nitroo-tech.ru
-    port: 443
-    uuid: e0bd20ba-5d68-4ba7-a505-b900e4f8b859
-    udp: true
-    tls: true
-    servername: google.com
-    reality-opts:
-      public-key: y_AlGiUJiCRWCT8FyrfUm-Cmpm0bl0cSUMRP3VZ9X0I
-      short-id: 89dbda1a1c9369
-    client-fingerprint: chrome
-    network: http
-    http-opts:
-      path:
-        - /
-  - name: "🌐 LTE | ru.joseulloa.c | #108"
-    type: vless
-    server: ru.joseulloa.cl
-    port: 443
-    uuid: 1428aae0-0dab-4b2b-9e1f-35308807ac0c
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: ru.joseulloa.cl
-    reality-opts:
-      public-key: vCUO_1iXf18cyIPsTob6E8dC7upXAVqer-iWJ1CVl3I
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🌐 LTE | in-se-th-01.ra | #109"
-    type: vless
-    server: in-se-th-01.ray-balance.space
-    port: 443
-    uuid: 0eca1f22-e5a1-4888-a0fa-c2345e87cf2f
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: eh.vk.com
-    reality-opts:
-      public-key: 29rxp4KkkiRwPRgWGnQH60t8ZNkYYv6VAyyGo3ExKWc
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🌐 LTE | ru.bujanoci.ne | #110"
+  - name: "🌐 LTE | ru.bujanoci.ne | #99"
     type: vless
     server: ru.bujanoci.net
     port: 443
@@ -1445,17 +1287,7 @@ proxies:
       public-key: vCUO_1iXf18cyIPsTob6E8dC7upXAVqer-iWJ1CVl3I
       short-id: ""
     client-fingerprint: chrome
-  - name: "🇷🇺 Сервер | JSC | #111"
-    type: vless
-    server: 5.129.241.205
-    port: 443
-    uuid: 6d916d55-fead-4ff3-a3a9-83e175ea8ad7
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: ""
-    skip-cert-verify: true
-  - name: "🌐 LTE | pl.unit-digita | #112"
+  - name: "🌐 LTE | pl.unit-digita | #100"
     type: vless
     server: pl.unit-digital.com
     port: 443
@@ -1471,7 +1303,20 @@ proxies:
     http-opts:
       path:
         - /api/v1/pol9f3kLm2Q
-  - name: "🌐 LTE | wl-ru-vk-02.ra | #113"
+  - name: "🇷🇺 LTE | LLC | #101"
+    type: vless
+    server: 90.156.212.138
+    port: 443
+    uuid: 0eca1f22-e5a1-4888-a0fa-c2345e87cf2f
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: cdnv-img.perekrestok.ru
+    reality-opts:
+      public-key: MNbAG72pXVO11PRzMRw7puKjDnmkig2mvEmdjow53Wc
+      short-id: ""
+    client-fingerprint: safari
+  - name: "🌐 LTE | wl-ru-vk-02.ra | #102"
     type: vless
     server: wl-ru-vk-02.ray-balance.space
     port: 443
@@ -1484,20 +1329,7 @@ proxies:
       public-key: MNbAG72pXVO11PRzMRw7puKjDnmkig2mvEmdjow53Wc
       short-id: ""
     client-fingerprint: safari
-  - name: "🌐 LTE | de.sky-node.or | #114"
-    type: vless
-    server: de.sky-node.org
-    port: 443
-    uuid: 78787b08-0747-48f8-9a02-8b8ac4833bdf
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: console.cloud.yandex.ru
-    reality-opts:
-      public-key: Ua80Sem5yHVDbRu37u1yYM5vWBzinhru__7ACrvnx1E
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🌐 LTE | wl-ru-vk-01.ra | #115"
+  - name: "🌐 LTE | wl-ru-vk-01.ra | #103"
     type: vless
     server: wl-ru-vk-01.ray-balance.space
     port: 443
@@ -1510,33 +1342,210 @@ proxies:
       public-key: MNbAG72pXVO11PRzMRw7puKjDnmkig2mvEmdjow53Wc
       short-id: ""
     client-fingerprint: chrome
-  - name: "🌐 LTE | ob.odavpn.onli | #116"
+  - name: "🇷🇺 LTE | JSC | #104"
     type: vless
-    server: ob.odavpn.online
-    port: 8443
-    uuid: 95557ad5-5d90-4f80-a1e2-a72fda60ca4b
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: web.max.ru
-    reality-opts:
-      public-key: oorlv4fppLwSZ3KdbfD41GYR8Qm8U5RtgxybrncTrzo
-      short-id: fe24f71a3ba8ac53
-    client-fingerprint: chrome
-  - name: "🌐 LTE | at.c2horizon.a | #117"
-    type: vless
-    server: at.c2horizon.app
+    server: 2.59.42.204
     port: 443
-    uuid: 4327a67f-c2f9-4664-942c-eaa94aef9243
+    uuid: 856e3682-2fe2-46ce-a4d1-925e7afa89ac
     udp: true
     flow: xtls-rprx-vision
     tls: true
-    servername: at.c2horizon.app
+    servername: goodcardboard.shop
     reality-opts:
-      public-key: IuvAXlAWBpeXehmEk0P-FIGTctUhny2H3UilbWWfJC0
-      short-id: 122218f4c1f172e4
+      public-key: rDPZZOBMmBb_mNKPEewzp9Uu6zkGrP7XOVpnRzetXDc
+      short-id: ""
+    client-fingerprint: randomized
+  - name: "🇷🇺 LTE | TimeWeb | #105"
+    type: vless
+    server: 92.53.120.191
+    port: 443
+    uuid: 873c0bbb-10e6-4166-a050-5c6ead07b1c9
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: goodcardboard.shop
+    reality-opts:
+      public-key: rDPZZOBMmBb_mNKPEewzp9Uu6zkGrP7XOVpnRzetXDc
+      short-id: ""
+    client-fingerprint: randomized
+  - name: "🇷🇺 LTE | LLC | #106"
+    type: vless
+    server: 84.23.54.74
+    port: 9882
+    uuid: b59cf03c-704f-44b0-b329-d3443e860481
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: www.amd.com
+    reality-opts:
+      public-key: srYLsJ-AMYXRUMvzxveyGG2HNUiclZp7rV5Jkbhfuk8
+      short-id: ""
     client-fingerprint: qq
-  - name: "🌐 LTE | es.odavpn.onli | #118"
+  - name: "🇷🇺 LTE | LLC | #107"
+    type: vless
+    server: 95.163.211.140
+    port: 80
+    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: www.vkvideo.ru
+    reality-opts:
+      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
+      short-id: 3f8ad1
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | JSC | #108"
+    type: vless
+    server: 90.156.209.66
+    port: 443
+    uuid: 873c0bbb-10e6-4166-a050-5c6ead07b1c9
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: goodcardboard.shop
+    reality-opts:
+      public-key: rDPZZOBMmBb_mNKPEewzp9Uu6zkGrP7XOVpnRzetXDc
+      short-id: ""
+    client-fingerprint: randomized
+  - name: "🇷🇺 LTE | Yandex.Cloud | #109"
+    type: vless
+    server: 51.250.126.235
+    port: 443
+    uuid: 50e5dbb7-be12-4964-b921-d03f1e2f25b7
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: tunnel.vk-apps.com
+    reality-opts:
+      public-key: tEduQabQ5YS0EPkXDIRMAuns068ZfzBlCrry4JS2MVs
+      short-id: 68d6237c
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | LLC | #110"
+    type: vless
+    server: 95.163.211.140
+    port: 8443
+    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
+    udp: true
+    tls: true
+    servername: www.vkvideo.ru
+    reality-opts:
+      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
+      short-id: 2356d1ae4b
+    client-fingerprint: chrome
+    network: http
+    http-opts:
+      path:
+        - /
+  - name: "🇷🇺 LTE | LLC | #111"
+    type: vless
+    server: 95.163.211.140
+    port: 443
+    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: www.vkvideo.ru
+    reality-opts:
+      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
+      short-id: 2356d1ae4b
+    client-fingerprint: chrome
+  - name: "🌐 LTE | in-fi-he.ray-b | #112"
+    type: vless
+    server: in-fi-he.ray-balance.space
+    port: 443
+    uuid: 0eca1f22-e5a1-4888-a0fa-c2345e87cf2f
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: eh.vk.com
+    reality-opts:
+      public-key: Q2tOlk0AlcufziQD1uUzBzb8Y2a_0Jp1Dq2KCnC1Z08
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🌐 LTE | at.pfvpn.cfd | #113"
+    type: vless
+    server: at.pfvpn.cfd
+    port: 1443
+    uuid: 0642ee71-53ad-403b-a210-97782ed3d94c
+    udp: true
+    tls: true
+    servername: yandex.ru
+    reality-opts:
+      public-key: asw-c8jLA8GT6tydb7teY46doPq-silOzQUFUkERxh0
+      short-id: 80e0
+    client-fingerprint: chrome
+    network: grpc
+    grpc-opts:
+      grpc-service-name: yandex.ru
+  - name: "🇷🇺 LTE | Selectel | #114"
+    type: vless
+    server: 5.188.114.99
+    port: 8443
+    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
+    udp: true
+    tls: true
+    servername: www.rutube.ru
+    reality-opts:
+      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
+      short-id: 3f8ad1
+    client-fingerprint: chrome
+    network: http
+    http-opts:
+      path:
+        - /
+  - name: "🇷🇺 LTE | Yandex.Cloud | #115"
+    type: vless
+    server: 51.250.117.39
+    port: 443
+    uuid: 02384e50-3028-4f3c-8889-16d320ebf35b
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: tunnel.vk-apps.com
+    reality-opts:
+      public-key: EzS6YGgfE-F0jR0-xXB5rVBh-1oNSC17oquln8hK4Wo
+      short-id: dce3019e
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | Hosting | #116"
+    type: vless
+    server: 89.110.94.231
+    port: 49800
+    uuid: 7a36ff3b-9571-407c-95c0-9f6d57177c20
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: yastatic.net
+    reality-opts:
+      public-key: 6iCYv2sUAaZoGL6iWT9-Qlp29cTAJCNI_RgCm3Wjwx0
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | JSC | #117"
+    type: vless
+    server: 82.97.243.86
+    port: 443
+    uuid: 873c0bbb-10e6-4166-a050-5c6ead07b1c9
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: goodcardboard.shop
+    reality-opts:
+      public-key: rDPZZOBMmBb_mNKPEewzp9Uu6zkGrP7XOVpnRzetXDc
+      short-id: ""
+    client-fingerprint: randomized
+  - name: "🇷🇺 LTE | JSC | #118"
+    type: vless
+    server: 90.156.209.81
+    port: 443
+    uuid: 856e3682-2fe2-46ce-a4d1-925e7afa89ac
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: goodcardboard.shop
+    reality-opts:
+      public-key: rDPZZOBMmBb_mNKPEewzp9Uu6zkGrP7XOVpnRzetXDc
+      short-id: ""
+    client-fingerprint: randomized
+  - name: "🌐 LTE | es.odavpn.onli | #119"
     type: vless
     server: es.odavpn.online
     port: 443
@@ -1552,33 +1561,74 @@ proxies:
     http-opts:
       path:
         - /eiJrIsx3xyQPUDqF8wT2
-  - name: "🌐 LTE | r1.serviceoda. | #119"
+  - name: "🇷🇺 LTE | Yandex.Cloud | #120"
     type: vless
-    server: r1.serviceoda.ru
+    server: 51.250.83.149
     port: 443
-    uuid: 95557ad5-5d90-4f80-a1e2-a72fda60ca4b
+    uuid: e060f013-53e5-4d88-bf5e-f93baa562ac5
     udp: true
     flow: xtls-rprx-vision
     tls: true
-    servername: securepayments.tinkoff.ru
+    servername: ads.x5.ru
     reality-opts:
-      public-key: yyLxjdbU7vLjtfY_3zn-9Vq83K1wC9ogjQMKgpehbTw
-      short-id: 915e2b53b22af1
-    client-fingerprint: qq
-  - name: "🌐 LTE | nu.serviceoda. | #120"
+      public-key: SSR8qHHHwFhf-LHig6DhZFoglHdVdImR6upc5DcpmHI
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🌐 LTE | de.nodes.rocke | #121"
     type: vless
-    server: nu.serviceoda.ru
+    server: de.nodes.rocketnetwork.ru
+    port: 10047
+    uuid: cb8ef789-2eb0-455a-909d-879fe09cf9d4
+    udp: true
+    tls: true
+    servername: wikiportal.su
+    reality-opts:
+      public-key: ZbClkr9LMZQxfrXcaUeJZN6hdIm_Ghrtp8V506tRngI
+      short-id: 18d68c9b00860ddd
+    client-fingerprint: chrome
+    network: grpc
+    grpc-opts:
+      grpc-service-name: stream
+  - name: "🌐 LTE | pl.nodes.rocke | #122"
+    type: vless
+    server: pl.nodes.rocketnetwork.ru
     port: 443
-    uuid: 95557ad5-5d90-4f80-a1e2-a72fda60ca4b
+    uuid: cb8ef789-2eb0-455a-909d-879fe09cf9d4
     udp: true
     flow: xtls-rprx-vision
     tls: true
-    servername: 360.yandex.ru
+    servername: pl.nodes.rocketnetwork.ru
     reality-opts:
-      public-key: V5SUdzTFbwv51a-l6f3EwLhiGzqd7i9RIbSscV5cAlg
-      short-id: 524669466717d4
-    client-fingerprint: qq
-  - name: "🌐 LTE | se.sky-node.or | #121"
+      public-key: Mn0DIMKW6zu0_D3E1qKO7xMlIVZvB-rqO_-f7Le2vAs
+      short-id: 428ef87fd47a3a32
+    client-fingerprint: chrome
+  - name: "🌐 LTE | lt.nodes.rocke | #123"
+    type: vless
+    server: lt.nodes.rocketnetwork.ru
+    port: 443
+    uuid: cb8ef789-2eb0-455a-909d-879fe09cf9d4
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: lt.nodes.rocketnetwork.ru
+    reality-opts:
+      public-key: Mn0DIMKW6zu0_D3E1qKO7xMlIVZvB-rqO_-f7Le2vAs
+      short-id: 428ef87fd47a3a32
+    client-fingerprint: chrome
+  - name: "🌐 LTE | ru.joseulloa.c | #124"
+    type: vless
+    server: ru.joseulloa.cl
+    port: 443
+    uuid: 1428aae0-0dab-4b2b-9e1f-35308807ac0c
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: ru.joseulloa.cl
+    reality-opts:
+      public-key: vCUO_1iXf18cyIPsTob6E8dC7upXAVqer-iWJ1CVl3I
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🌐 LTE | se.sky-node.or | #125"
     type: vless
     server: se.sky-node.org
     port: 443
@@ -1591,7 +1641,20 @@ proxies:
       public-key: Ua80Sem5yHVDbRu37u1yYM5vWBzinhru__7ACrvnx1E
       short-id: ""
     client-fingerprint: chrome
-  - name: "🌐 LTE | pl.sky-node.or | #122"
+  - name: "🇷🇺 LTE | Moscow | #126"
+    type: vless
+    server: 90.156.215.37
+    port: 9443
+    uuid: b59cf03c-704f-44b0-b329-d3443e860481
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: www.io.ozone.ru
+    reality-opts:
+      public-key: im7-98zxWz_OGimQfeoN_Y5p1tAy8KoZCxOe2wOeWS4
+      short-id: ""
+    client-fingerprint: qq
+  - name: "🌐 LTE | pl.sky-node.or | #127"
     type: vless
     server: pl.sky-node.org
     port: 443
@@ -1604,62 +1667,136 @@ proxies:
       public-key: Ua80Sem5yHVDbRu37u1yYM5vWBzinhru__7ACrvnx1E
       short-id: ""
     client-fingerprint: chrome
-  - name: "🌐 LTE | nl-2.bereza-op | #123"
+  - name: "🇷🇺 LTE | Citytelecom | #128"
     type: vless
-    server: nl-2.bereza-open.ru
+    server: 62.152.59.132
     port: 443
-    uuid: 66b8db3d-8bbe-4d90-ab9a-dc5a5f634444
+    uuid: 7d78652e-4ec5-4ab9-b7bd-bb4ff1e8a976
     udp: true
+    flow: xtls-rprx-vision
     tls: true
-    servername: www.apple.com
+    servername: smartcaptcha.yandexcloud.net
     reality-opts:
-      public-key: dHwQjYt_sORw2BUs72daqES0qb5uDwtfDzS2YYl9Iy8
-      short-id: 31b26c0d77
+      public-key: AiG06E-jizo9xtBbulKQvdQqhZfobZJBTQIKkaDjaiU
+      short-id: a1b2c3d4e5
     client-fingerprint: chrome
-    network: http
-    http-opts:
-      path:
-        - /
-  - name: "🇷🇺 LTE | Yandex.Cloud | #124"
+  - name: "🌐 LTE | ca.sky-node.or | #129"
     type: vless
-    server: 51.250.126.221
+    server: ca.sky-node.org
     port: 443
-    uuid: 5039ac6a-2575-4b7f-b812-212c10501037
+    uuid: 78787b08-0747-48f8-9a02-8b8ac4833bdf
     udp: true
     flow: xtls-rprx-vision
     tls: true
-    servername: tunnel.vk-apps.com
+    servername: console.cloud.yandex.ru
     reality-opts:
-      public-key: 2Ea-rod_ya4aiuRbjC4qwzjZmXdjnjW9n_5Z4DI6M0k
-      short-id: 8f64bb95
-    client-fingerprint: safari
-  - name: "🌐 LTE | ee.serviceoda. | #125"
+      public-key: Ua80Sem5yHVDbRu37u1yYM5vWBzinhru__7ACrvnx1E
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🌐 LTE | uk.sky-node.or | #130"
     type: vless
-    server: ee.serviceoda.ru
+    server: uk.sky-node.org
     port: 443
-    uuid: 95557ad5-5d90-4f80-a1e2-a72fda60ca4b
+    uuid: 78787b08-0747-48f8-9a02-8b8ac4833bdf
     udp: true
     flow: xtls-rprx-vision
     tls: true
-    servername: ya.ru
+    servername: console.cloud.yandex.ru
     reality-opts:
-      public-key: F1RQOkjsJd0zgk8LfCa-4FOzc84ssQIhFjzMr90juTk
-      short-id: b478456fec48c004
+      public-key: Ua80Sem5yHVDbRu37u1yYM5vWBzinhru__7ACrvnx1E
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | Hosting | #131"
+    type: vless
+    server: 91.142.72.83
+    port: 33569
+    uuid: 7a36ff3b-9571-407c-95c0-9f6d57177c20
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: www.cloudflare.com
+    reality-opts:
+      public-key: zF51s3Rq32F0LEZ1Rz19IOc1JaVMX7BH6YMqBnV2CyQ
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇷🇺 Сервер | JSC | #132"
+    type: vless
+    server: 5.129.241.205
+    port: 443
+    uuid: 6d916d55-fead-4ff3-a3a9-83e175ea8ad7
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: ""
+    skip-cert-verify: true
+  - name: "🇷🇸 LTE | Maxim | #133"
+    type: vless
+    server: 87.121.38.33
+    port: 59999
+    uuid: 5755d19b-bb68-4e57-9793-2f3f6af228fd
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: yastatic.net
+    reality-opts:
+      public-key: x0t1otRGBv62aJKGNbsQRJGtwh-sp6CEScFS6S8y3EM
+      short-id: 7c8d9e0f
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | "Domain | #134"
+    type: vless
+    server: 79.174.95.163
+    port: 2083
+    uuid: 5a36817c-83c0-4032-a4e8-caf1f91a44ab
+    udp: true
+    tls: true
+    servername: ads.x5.ru
+    reality-opts:
+      public-key: J6NuOlIq3ypdTFc1TMhDDKmF8BWPnNWZq1EkxD7K-lQ
+      short-id: 6da16b1335651b38
     client-fingerprint: qq
-  - name: "🌐 LTE | nl-2.bereza-op | #126"
+    network: grpc
+    grpc-opts:
+      grpc-service-name: UpdateService
+  - name: "🌐 LTE | in-se-th-01.ra | #135"
     type: vless
-    server: nl-2.bereza-open.ru
-    port: 8443
-    uuid: 66b8db3d-8bbe-4d90-ab9a-dc5a5f634444
+    server: in-se-th-01.ray-balance.space
+    port: 443
+    uuid: 0eca1f22-e5a1-4888-a0fa-c2345e87cf2f
     udp: true
     flow: xtls-rprx-vision
     tls: true
-    servername: www.apple.com
+    servername: eh.vk.com
     reality-opts:
-      public-key: k-PFLleB5d-wS6WkDUm235vMDmZgMeg9D3SQhaW8d0I
-      short-id: 757a8db835294cc8
+      public-key: 29rxp4KkkiRwPRgWGnQH60t8ZNkYYv6VAyyGo3ExKWc
+      short-id: ""
     client-fingerprint: chrome
-  - name: "🇵🇱 LTE | Newserverlife | #127"
+  - name: "🇷🇺 LTE | EdgeCenter | #136"
+    type: vless
+    server: 5.189.223.188
+    port: 48444
+    uuid: 5755d19b-bb68-4e57-9793-2f3f6af228fd
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: yastatic.net
+    reality-opts:
+      public-key: 1b2A4lFiVNwHRsby-KZ5DTyml_o1uJyIx82g6JJGank
+      short-id: ""
+    client-fingerprint: chrome
+  - name: "🇵🇱 LTE | Newserverlife | #137"
+    type: vless
+    server: 82.22.40.191
+    port: 59999
+    uuid: 5755d19b-bb68-4e57-9793-2f3f6af228fd
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: yastatic.net
+    reality-opts:
+      public-key: x0t1otRGBv62aJKGNbsQRJGtwh-sp6CEScFS6S8y3EM
+      short-id: 7c8d9e0f
+    client-fingerprint: chrome
+  - name: "🇵🇱 LTE | Newserverlife | #138"
     type: vless
     server: 82.22.40.178
     port: 59999
@@ -1672,7 +1809,20 @@ proxies:
       public-key: x0t1otRGBv62aJKGNbsQRJGtwh-sp6CEScFS6S8y3EM
       short-id: a1b2c3d4
     client-fingerprint: chrome
-  - name: "🌐 LTE | nl.sky-node.or | #128"
+  - name: "🌐 LTE | ob.odavpn.onli | #139"
+    type: vless
+    server: ob.odavpn.online
+    port: 8443
+    uuid: 95557ad5-5d90-4f80-a1e2-a72fda60ca4b
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: web.max.ru
+    reality-opts:
+      public-key: oorlv4fppLwSZ3KdbfD41GYR8Qm8U5RtgxybrncTrzo
+      short-id: fe24f71a3ba8ac53
+    client-fingerprint: chrome
+  - name: "🌐 LTE | nl.sky-node.or | #140"
     type: vless
     server: nl.sky-node.org
     port: 443
@@ -1685,22 +1835,7 @@ proxies:
       public-key: Ua80Sem5yHVDbRu37u1yYM5vWBzinhru__7ACrvnx1E
       short-id: ""
     client-fingerprint: chrome
-  - name: "🌐 LTE | nd.nitroo-tech | #129"
-    type: vless
-    server: nd.nitroo-tech.ru
-    port: 23355
-    uuid: 65632d4a-0e5a-4d96-a492-c1b1c7ab0305
-    udp: true
-    tls: true
-    servername: www.apple.com
-    reality-opts:
-      public-key: ZaiARE0PFYXN6XQhxjFSGzpthEGHmytMX8LCq9gSek8
-      short-id: 41b06f
-    client-fingerprint: chrome
-    network: grpc
-    grpc-opts:
-      grpc-service-name: api
-  - name: "🌐 LTE | la.nitroo-tech | #130"
+  - name: "🌐 LTE | la.nitroo-tech | #141"
     type: vless
     server: la.nitroo-tech.ru
     port: 443
@@ -1716,20 +1851,7 @@ proxies:
     http-opts:
       path:
         - /repos/octocat/Spoon-Knife/issues
-  - name: "🌐 LTE | kz.c2horizon.a | #131"
-    type: vless
-    server: kz.c2horizon.app
-    port: 443
-    uuid: 4327a67f-c2f9-4664-942c-eaa94aef9243
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: kz.c2horizon.app
-    reality-opts:
-      public-key: IuvAXlAWBpeXehmEk0P-FIGTctUhny2H3UilbWWfJC0
-      short-id: 122218f4c1f172e4
-    client-fingerprint: qq
-  - name: "🇮🇱 LTE | WorkTitans | #132"
+  - name: "🇮🇱 LTE | WorkTitans | #142"
     type: vless
     server: 91.225.218.147
     port: 8443
@@ -1742,7 +1864,7 @@ proxies:
       public-key: 98GUVpWw96tdeGtjIOHXmkklpeA72qQQJoxxyfJ1yTo
       short-id: 3e4f5a6b
     client-fingerprint: chrome
-  - name: "🌐 LTE | ru.nitroo-tech | #133"
+  - name: "🌐 LTE | ru.nitroo-tech | #143"
     type: vless
     server: ru.nitroo-tech.ru
     port: 8443
@@ -1755,48 +1877,22 @@ proxies:
       public-key: HlIL2d4-9ApZHSA_HiI5_3Ao0msZBNxJTAWBVDkEv2s
       short-id: ""
     client-fingerprint: chrome
-  - name: "🇷🇺 LTE | Global | #134"
+  - name: "🌐 LTE | nd.nitroo-tech | #144"
     type: vless
-    server: 37.18.15.130
-    port: 47015
-    uuid: 10d3d4c8-167e-4a4b-8516-cd328c91ab95
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: api-maps.yandex.ru
-    reality-opts:
-      public-key: XK84BZHm8wGcPS24VRXFUv2PC399k6KejjV0GO_J4yY
-      short-id: ""
-    client-fingerprint: qq
-  - name: "🌐 LTE | ss.l90909l.vip | #135"
-    type: vless
-    server: ss.l90909l.vip
-    port: 2096
-    uuid: b4bc10bf-80f9-40c9-b4e5-29817c2f0992
+    server: nd.nitroo-tech.ru
+    port: 23355
+    uuid: 65632d4a-0e5a-4d96-a492-c1b1c7ab0305
     udp: true
     tls: true
-    servername: id.vk.com
+    servername: www.apple.com
     reality-opts:
-      public-key: SbVKOEMjK0sIlbwg4akyBg5mL5KZwwB-ed4eEE7YnRc
-      short-id: ""
+      public-key: ZaiARE0PFYXN6XQhxjFSGzpthEGHmytMX8LCq9gSek8
+      short-id: 41b06f
     client-fingerprint: chrome
     network: grpc
     grpc-opts:
-      grpc-service-name: vless-grpc-reality
-  - name: "🇷🇺 LTE | EdgeCenter | #136"
-    type: vless
-    server: 5.189.223.188
-    port: 48444
-    uuid: 5755d19b-bb68-4e57-9793-2f3f6af228fd
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: yastatic.net
-    reality-opts:
-      public-key: 1b2A4lFiVNwHRsby-KZ5DTyml_o1uJyIx82g6JJGank
-      short-id: ""
-    client-fingerprint: chrome
-  - name: "🌐 LTE | se.c2horizon.a | #137"
+      grpc-service-name: api
+  - name: "🌐 LTE | se.c2horizon.a | #145"
     type: vless
     server: se.c2horizon.app
     port: 443
@@ -1809,33 +1905,20 @@ proxies:
       public-key: IuvAXlAWBpeXehmEk0P-FIGTctUhny2H3UilbWWfJC0
       short-id: 122218f4c1f172e4
     client-fingerprint: qq
-  - name: "🇳🇱 LTE | Fast | #138"
+  - name: "🇧🇦 LTE | WorkTitans | #146"
     type: vless
-    server: 85.209.157.31
-    port: 568
-    uuid: 95557ad5-5d90-4f80-a1e2-a72fda60ca4b
+    server: 45.15.178.203
+    port: 59999
+    uuid: 5755d19b-bb68-4e57-9793-2f3f6af228fd
     udp: true
     flow: xtls-rprx-vision
     tls: true
-    servername: www.amd.com
+    servername: yastatic.net
     reality-opts:
-      public-key: 59QwNDh3sgvFX12hCCoCveYykCzo19hxh6wel3hN3GA
-      short-id: ""
-    client-fingerprint: random
-  - name: "🇷🇺 LTE | Yandex | #139"
-    type: vless
-    server: 84.201.173.63
-    port: 443
-    uuid: 4327a67f-c2f9-4664-942c-eaa94aef9243
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: ads.x5.ru
-    reality-opts:
-      public-key: r5WB5FnSCt4eeBC1FJMfkWHbzsMuabo0Rc6wuAhlZUs
-      short-id: 672ff0
+      public-key: x0t1otRGBv62aJKGNbsQRJGtwh-sp6CEScFS6S8y3EM
+      short-id: 1a2b3c4d
     client-fingerprint: chrome
-  - name: "🇺🇸 LTE | WorkTitans | #140"
+  - name: "🇺🇸 LTE | WorkTitans | #147"
     type: vless
     server: 45.136.149.27
     port: 48444
@@ -1848,220 +1931,230 @@ proxies:
       public-key: FApUbcJurXfV5Y3PG2xRycl1R7y0CxwmUU7FRgUpzG0
       short-id: 1a2b3c4d
     client-fingerprint: random
-  - name: "🇷🇺 LTE | LLC | #141"
+  - name: "🇷🇺 LTE | Selectel | #148"
     type: vless
-    server: 79.137.175.228
-    port: 8443
-    uuid: 99c49969-b1d5-4cb3-b39d-1696ead77f85
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: rbc.ru
-    reality-opts:
-      public-key: 7zd9mJilgjOrg_ohtw23Vmio-pdnYqeP_r-kiWt87Cg
-      short-id: 2715592069f36fe7
-    client-fingerprint: random
-  - name: "🌐 LTE | bg.c2horizon.a | #142"
-    type: vless
-    server: bg.c2horizon.app
+    server: 5.188.114.99
     port: 443
-    uuid: 4327a67f-c2f9-4664-942c-eaa94aef9243
+    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
     udp: true
     flow: xtls-rprx-vision
     tls: true
-    servername: bg.c2horizon.app
+    servername: www.rutube.ru
     reality-opts:
-      public-key: IuvAXlAWBpeXehmEk0P-FIGTctUhny2H3UilbWWfJC0
-      short-id: 122218f4c1f172e4
-    client-fingerprint: qq
-  - name: "🇷🇺 LTE | Global | #143"
-    type: vless
-    server: 46.243.232.61
-    port: 4449
-    uuid: c2e11432-30f0-462c-82a7-546965cec8a4
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: max.ru
-    reality-opts:
-      public-key: n7SozQLXoCxDya7vBJwS5ebj39r4KCUZrfsnBfcCLGs
-      short-id: 3689d0c3
-    client-fingerprint: qq
-  - name: "🇷🇺 LTE | LLC | #144"
-    type: vless
-    server: 84.23.54.74
-    port: 9882
-    uuid: b59cf03c-704f-44b0-b329-d3443e860481
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: www.amd.com
-    reality-opts:
-      public-key: srYLsJ-AMYXRUMvzxveyGG2HNUiclZp7rV5Jkbhfuk8
-      short-id: ""
-    client-fingerprint: qq
-  - name: "🇺🇸 LTE | tzulo, | #145"
-    type: vless
-    server: 23.158.233.66
-    port: 8443
-    uuid: dfbf9fda-863f-4071-85a8-af572f3a7f71
-    udp: true
-    flow: xtls-rprx-vision
-    tls: true
-    servername: ya.ru
-    reality-opts:
-      public-key: 98GUVpWw96tdeGtjIOHXmkklpeA72qQQJoxxyfJ1yTo
-      short-id: 6ba85179
+      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
+      short-id: 44103f58
     client-fingerprint: chrome
+  - name: "🇷🇺 LTE | Yandex.Cloud | #149"
+    type: vless
+    server: 51.250.126.221
+    port: 443
+    uuid: 5039ac6a-2575-4b7f-b812-212c10501037
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: tunnel.vk-apps.com
+    reality-opts:
+      public-key: 2Ea-rod_ya4aiuRbjC4qwzjZmXdjnjW9n_5Z4DI6M0k
+      short-id: 8f64bb95
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | Selectel | #150"
+    type: vless
+    server: 5.188.114.99
+    port: 80
+    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: www.rutube.ru
+    reality-opts:
+      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
+      short-id: 3f8ad1
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | LLC | #151"
+    type: vless
+    server: 95.163.210.78
+    port: 80
+    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
+    udp: true
+    flow: xtls-rprx-vision
+    tls: true
+    servername: www.vkvideo.ru
+    reality-opts:
+      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
+      short-id: 44103f58
+    client-fingerprint: chrome
+  - name: "🇷🇺 LTE | LLC | #152"
+    type: vless
+    server: 95.163.210.78
+    port: 8443
+    uuid: 98f6b8b0-88bd-4fa8-82f4-ed120ecf8b5c
+    udp: true
+    tls: true
+    servername: www.vkvideo.ru
+    reality-opts:
+      public-key: cynncQk7kKzEQaExg-FN7pMqFaZPSXEi_Ggy7AXXmVg
+      short-id: 44103f58
+    client-fingerprint: chrome
+    network: http
+    http-opts:
+      path:
+        - /
 proxy-groups:
   - name: 🚀 Авто
     type: url-test
     proxies:
-      - "🇪🇪 LTE | OC | #1"
-      - "🇩🇪 LTE | Play2go | #2"
-      - "🇷🇺 Сервер | JSC | #3"
-      - "🇷🇺 LTE | JSC | #4"
-      - "🇷🇺 LTE | Beget | #5"
-      - "🇷🇺 LTE | "Domain | #6"
+      - "🇷🇺 Универсальный | JSC | #1"
+      - "🇷🇺 LTE | JSC | #2"
+      - "🇪🇪 LTE | OC | #3"
+      - "🇷🇺 LTE | "Domain | #4"
+      - "🇷🇺 LTE | "Domain | #5"
+      - "🇷🇺 LTE | Beget | #6"
       - "🇷🇺 LTE | "Domain | #7"
-      - "🇷🇺 LTE | "Domain | #8"
-      - "🇷🇺 LTE | LLC | #9"
-      - "🇷🇺 LTE | Yandex.Cloud | #10"
+      - "🇷🇺 LTE | LLC | #8"
+      - "🇷🇺 Сервер | JSC | #9"
+      - "🇱🇹 LTE | UAB | #10"
       - "🇷🇺 LTE | JSC | #11"
-      - "🇷🇺 Сервер | JSC | #12"
+      - "🇪🇪 LTE | OC | #12"
       - "🇷🇺 LTE | JSC | #13"
-      - "🇷🇺 LTE | Selectel | #14"
+      - "🇷🇺 LTE | JSC | #14"
       - "🇷🇺 LTE | JSC | #15"
       - "🇷🇺 LTE | JSC | #16"
       - "🇷🇺 LTE | JSC | #17"
       - "🇷🇺 LTE | JSC | #18"
-      - "🇷🇺 LTE | EdgeCenter | #19"
-      - "🇷🇺 LTE | JSC | #20"
-      - "🇪🇪 LTE | OC | #21"
-      - "🇱🇹 LTE | UAB | #22"
+      - "🇷🇺 LTE | "Domain | #19"
+      - "🇷🇺 Сервер | JSC | #20"
+      - "🇨🇭 LTE | WorkTitans | #21"
+      - "🇷🇺 LTE | JSC | #22"
       - "🇷🇺 LTE | JSC | #23"
-      - "🇷🇺 LTE | LLC | #24"
-      - "🇷🇺 LTE | JSC | #25"
-      - "🇷🇺 LTE | JSC | #26"
-      - "🇷🇺 LTE | JSC | #27"
-      - "🇷🇺 LTE | Yandex.Cloud | #28"
-      - "🇨🇭 LTE | WorkTitans | #29"
+      - "🇷🇺 LTE | JSC | #24"
+      - "🇫🇮 LTE | H2nexus | #25"
+      - "🇷🇺 LTE | Selectel | #26"
+      - "🇱🇻 LTE | RETN | #27"
+      - "🇨🇭 LTE | WorkTitans | #28"
+      - "🌐 LTE | bs.itg.top | #29"
       - "🇷🇺 LTE | JSC | #30"
-      - "🇷🇺 Сервер | JSC | #31"
-      - "🇷🇺 LTE | JSC | #32"
-      - "🌐 LTE | bs.itg.top | #33"
+      - "🇷🇺 LTE | JSC | #31"
+      - "🌐 LTE | tl.itg.top | #32"
+      - "🇷🇺 LTE | LLC | #33"
       - "🇷🇺 LTE | JSC | #34"
-      - "🇷🇺 LTE | JSC | #35"
-      - "🌐 LTE | tl.itg.top | #36"
-      - "🇷🇺 LTE | Yandex.Cloud | #37"
-      - "🇷🇺 LTE | Citytelecom | #38"
-      - "🇱🇻 LTE | RETN | #39"
-      - "🇷🇺 LTE | Yandex.Cloud | #40"
-      - "🇷🇺 Сервер | JSC | #41"
-      - "🌐 LTE | vl.itg.top | #42"
-      - "🌐 LTE | ds.itg.top | #43"
-      - "🇷🇺 LTE | Yandex.Cloud | #44"
-      - "🇫🇮 LTE | H2nexus | #45"
+      - "🇷🇺 LTE | Yandex.Cloud | #35"
+      - "🌐 LTE | vl.itg.top | #36"
+      - "🌐 LTE | ru-manage.node | #37"
+      - "🌐 LTE | ds.itg.top | #38"
+      - "🇪🇪 LTE | OC | #39"
+      - "🇪🇪 LTE | OC | #40"
+      - "🇷🇺 LTE | LLC | #41"
+      - "🇷🇺 LTE | Yandex.Cloud | #42"
+      - "🇪🇪 LTE | OC | #43"
+      - "🇩🇪 LTE | Play2go | #44"
+      - "🇪🇪 LTE | OC | #45"
       - "🇷🇺 LTE | LLC | #46"
-      - "🇷🇺 LTE | EdgeCenter | #47"
-      - "🇷🇺 LTE | Yandex.Cloud | #48"
+      - "🇩🇪 LTE | Play2go | #47"
+      - "🇫🇷 LTE | Aeza | #48"
       - "🇷🇺 LTE | LLC | #49"
-      - "🇷🇺 LTE | TimeWeb | #50"
-      - "🇷🇺 Сервер | JSC | #51"
+      - "🇷🇺 Сервер | JSC | #50"
+      - "🇩🇪 LTE | Play2go | #51"
       - "🇷🇺 Сервер | vds | #52"
-      - "🇷🇺 LTE | Yandex.Cloud | #53"
-      - "🇷🇺 LTE | Yandex.Cloud | #54"
-      - "🇷🇺 LTE | BlueVPS | #55"
-      - "🇷🇺 LTE | LLC | #56"
-      - "🇷🇺 LTE | Yandex.Cloud | #57"
-      - "🇳🇱 LTE | Play2go | #58"
-      - "🇫🇷 LTE | Aeza | #59"
-      - "🇷🇺 LTE | LLC | #60"
-      - "🇷🇺 LTE | Yandex.Cloud | #61"
-      - "🇷🇺 LTE | JSC | #62"
-      - "🇳🇱 LTE | Servers | #63"
-      - "🇷🇺 LTE | JSC | #64"
-      - "🇳🇱 LTE | EUROBYTE | #65"
-      - "🇷🇺 LTE | "Domain | #66"
-      - "🇷🇺 LTE | JSC | #67"
-      - "🌐 LTE | at.pfvpn.cfd | #68"
-      - "🌐 LTE | ru.appav.net | #69"
-      - "🇷🇺 LTE | Selectel | #70"
-      - "🇺🇸 LTE | Fast | #71"
-      - "🇫🇷 LTE | Aeza | #72"
+      - "🇳🇱 LTE | EUROBYTE | #53"
+      - "🇷🇺 LTE | LLC | #54"
+      - "🇩🇪 LTE | Play2go | #55"
+      - "🇷🇺 LTE | Yandex | #56"
+      - "🇷🇺 LTE | LLC | #57"
+      - "🇩🇪 LTE | Play2go | #58"
+      - "🇷🇺 LTE | LLC | #59"
+      - "🇷🇺 LTE | Yandex.Cloud | #60"
+      - "🇷🇺 LTE | EdgeCenter | #61"
+      - "🇫🇷 LTE | Aeza | #62"
+      - "🇷🇺 LTE | Citytelecom | #63"
+      - "🇷🇺 LTE | LLC | #64"
+      - "🇷🇺 LTE | Citytelecom | #65"
+      - "🇷🇺 LTE | LLC | #66"
+      - "🇷🇺 Сервер | JSC | #67"
+      - "🇷🇺 LTE | JSC | #68"
+      - "🇷🇺 LTE | BlueVPS | #69"
+      - "🇷🇺 LTE | Yandex.Cloud | #70"
+      - "🇳🇱 LTE | Play2go | #71"
+      - "🇷🇺 LTE | Yandex.Cloud | #72"
       - "🇷🇺 LTE | LLC | #73"
       - "🇷🇺 LTE | LLC | #74"
-      - "🇷🇺 LTE | LLC | #75"
-      - "🇷🇺 LTE | JSC | #76"
-      - "🇷🇺 LTE | Moscow | #77"
-      - "🇷🇺 LTE | LLC | #78"
-      - "🇷🇺 LTE | LLC | #79"
-      - "🇷🇺 LTE | JSC | #80"
-      - "🇷🇺 LTE | JSC | #81"
+      - "🇷🇺 Сервер | JSC | #75"
+      - "🇷🇺 LTE | Yandex | #76"
+      - "🇷🇺 LTE | LLC | #77"
+      - "🇷🇺 LTE | Reg.Ru | #78"
+      - "🇷🇺 LTE | Yandex | #79"
+      - "🇷🇺 LTE | Yandex | #80"
+      - "🇷🇺 Сервер | JSC | #81"
       - "🇷🇺 LTE | JSC | #82"
-      - "🇷🇺 LTE | LLC | #83"
-      - "🇷🇺 LTE | JSC | #84"
-      - "🇵🇱 LTE | Fast | #85"
-      - "🇰🇿 LTE | Newserverlife | #86"
-      - "🇷🇺 LTE | LLC | #87"
-      - "🇷🇺 Сервер | Delta | #88"
-      - "🇷🇺 LTE | LLC | #89"
-      - "🇷🇺 LTE | LLC | #90"
-      - "🇷🇺 LTE | JSC | #91"
-      - "🇷🇺 LTE | Selectel | #92"
-      - "🇷🇺 LTE | Selectel | #93"
-      - "🇷🇺 LTE | Selectel | #94"
-      - "🇷🇺 LTE | EdgeCenter | #95"
-      - "🇷🇺 LTE | Citytelecom | #96"
-      - "🇷🇺 LTE | LLC | #97"
-      - "🇫🇮 LTE | WAIcore | #98"
-      - "🌐 LTE | ru-manage.node | #99"
-      - "🇷🇺 LTE | Yandex.Cloud | #100"
-      - "🇹🇷 LTE | WorkTitans | #101"
-      - "🌐 LTE | ca.sky-node.or | #102"
-      - "🇷🇺 LTE | Hosting | #103"
-      - "🌐 LTE | in-fi-he.ray-b | #104"
-      - "🇵🇱 LTE | Newserverlife | #105"
-      - "🇷🇺 LTE | Hosting | #106"
-      - "🌐 LTE | de.nitroo-tech | #107"
-      - "🌐 LTE | ru.joseulloa.c | #108"
-      - "🌐 LTE | in-se-th-01.ra | #109"
-      - "🌐 LTE | ru.bujanoci.ne | #110"
-      - "🇷🇺 Сервер | JSC | #111"
-      - "🌐 LTE | pl.unit-digita | #112"
-      - "🌐 LTE | wl-ru-vk-02.ra | #113"
-      - "🌐 LTE | de.sky-node.or | #114"
-      - "🌐 LTE | wl-ru-vk-01.ra | #115"
-      - "🌐 LTE | ob.odavpn.onli | #116"
-      - "🌐 LTE | at.c2horizon.a | #117"
-      - "🌐 LTE | es.odavpn.onli | #118"
-      - "🌐 LTE | r1.serviceoda. | #119"
-      - "🌐 LTE | nu.serviceoda. | #120"
-      - "🌐 LTE | se.sky-node.or | #121"
-      - "🌐 LTE | pl.sky-node.or | #122"
-      - "🌐 LTE | nl-2.bereza-op | #123"
-      - "🇷🇺 LTE | Yandex.Cloud | #124"
-      - "🌐 LTE | ee.serviceoda. | #125"
-      - "🌐 LTE | nl-2.bereza-op | #126"
-      - "🇵🇱 LTE | Newserverlife | #127"
-      - "🌐 LTE | nl.sky-node.or | #128"
-      - "🌐 LTE | nd.nitroo-tech | #129"
-      - "🌐 LTE | la.nitroo-tech | #130"
-      - "🌐 LTE | kz.c2horizon.a | #131"
-      - "🇮🇱 LTE | WorkTitans | #132"
-      - "🌐 LTE | ru.nitroo-tech | #133"
-      - "🇷🇺 LTE | Global | #134"
-      - "🌐 LTE | ss.l90909l.vip | #135"
+      - "🇷🇺 LTE | JSC | #83"
+      - "🇷🇺 LTE | UFO | #84"
+      - "🇷🇺 LTE | Yandex.Cloud | #85"
+      - "🇷🇺 LTE | Yandex | #86"
+      - "🇷🇺 LTE | Yandex.Cloud | #87"
+      - "🇷🇺 LTE | LLC | #88"
+      - "🇷🇺 LTE | Yandex.Cloud | #89"
+      - "🇷🇺 LTE | JSC | #90"
+      - "🇷🇺 LTE | Moscow | #91"
+      - "🇷🇺 LTE | Yandex.Cloud | #92"
+      - "🇷🇺 LTE | JSC | #93"
+      - "🇷🇺 LTE | JSC | #94"
+      - "🇷🇺 LTE | Yandex | #95"
+      - "🇺🇸 LTE | Fast | #96"
+      - "🇷🇺 LTE | Yandex.Cloud | #97"
+      - "🇷🇺 LTE | LLC | #98"
+      - "🌐 LTE | ru.bujanoci.ne | #99"
+      - "🌐 LTE | pl.unit-digita | #100"
+      - "🇷🇺 LTE | LLC | #101"
+      - "🌐 LTE | wl-ru-vk-02.ra | #102"
+      - "🌐 LTE | wl-ru-vk-01.ra | #103"
+      - "🇷🇺 LTE | JSC | #104"
+      - "🇷🇺 LTE | TimeWeb | #105"
+      - "🇷🇺 LTE | LLC | #106"
+      - "🇷🇺 LTE | LLC | #107"
+      - "🇷🇺 LTE | JSC | #108"
+      - "🇷🇺 LTE | Yandex.Cloud | #109"
+      - "🇷🇺 LTE | LLC | #110"
+      - "🇷🇺 LTE | LLC | #111"
+      - "🌐 LTE | in-fi-he.ray-b | #112"
+      - "🌐 LTE | at.pfvpn.cfd | #113"
+      - "🇷🇺 LTE | Selectel | #114"
+      - "🇷🇺 LTE | Yandex.Cloud | #115"
+      - "🇷🇺 LTE | Hosting | #116"
+      - "🇷🇺 LTE | JSC | #117"
+      - "🇷🇺 LTE | JSC | #118"
+      - "🌐 LTE | es.odavpn.onli | #119"
+      - "🇷🇺 LTE | Yandex.Cloud | #120"
+      - "🌐 LTE | de.nodes.rocke | #121"
+      - "🌐 LTE | pl.nodes.rocke | #122"
+      - "🌐 LTE | lt.nodes.rocke | #123"
+      - "🌐 LTE | ru.joseulloa.c | #124"
+      - "🌐 LTE | se.sky-node.or | #125"
+      - "🇷🇺 LTE | Moscow | #126"
+      - "🌐 LTE | pl.sky-node.or | #127"
+      - "🇷🇺 LTE | Citytelecom | #128"
+      - "🌐 LTE | ca.sky-node.or | #129"
+      - "🌐 LTE | uk.sky-node.or | #130"
+      - "🇷🇺 LTE | Hosting | #131"
+      - "🇷🇺 Сервер | JSC | #132"
+      - "🇷🇸 LTE | Maxim | #133"
+      - "🇷🇺 LTE | "Domain | #134"
+      - "🌐 LTE | in-se-th-01.ra | #135"
       - "🇷🇺 LTE | EdgeCenter | #136"
-      - "🌐 LTE | se.c2horizon.a | #137"
-      - "🇳🇱 LTE | Fast | #138"
-      - "🇷🇺 LTE | Yandex | #139"
-      - "🇺🇸 LTE | WorkTitans | #140"
-      - "🇷🇺 LTE | LLC | #141"
-      - "🌐 LTE | bg.c2horizon.a | #142"
-      - "🇷🇺 LTE | Global | #143"
-      - "🇷🇺 LTE | LLC | #144"
-      - "🇺🇸 LTE | tzulo, | #145"
+      - "🇵🇱 LTE | Newserverlife | #137"
+      - "🇵🇱 LTE | Newserverlife | #138"
+      - "🌐 LTE | ob.odavpn.onli | #139"
+      - "🌐 LTE | nl.sky-node.or | #140"
+      - "🌐 LTE | la.nitroo-tech | #141"
+      - "🇮🇱 LTE | WorkTitans | #142"
+      - "🌐 LTE | ru.nitroo-tech | #143"
+      - "🌐 LTE | nd.nitroo-tech | #144"
+      - "🌐 LTE | se.c2horizon.a | #145"
+      - "🇧🇦 LTE | WorkTitans | #146"
+      - "🇺🇸 LTE | WorkTitans | #147"
+      - "🇷🇺 LTE | Selectel | #148"
+      - "🇷🇺 LTE | Yandex.Cloud | #149"
+      - "🇷🇺 LTE | Selectel | #150"
+      - "🇷🇺 LTE | LLC | #151"
+      - "🇷🇺 LTE | LLC | #152"
     url: "https://www.gstatic.com/generate_204"
     interval: 180
     tolerance: 50
@@ -2069,151 +2162,158 @@ proxy-groups:
     type: select
     proxies:
       - 🚀 Авто
-      - "🇪🇪 LTE | OC | #1"
-      - "🇩🇪 LTE | Play2go | #2"
-      - "🇷🇺 Сервер | JSC | #3"
-      - "🇷🇺 LTE | JSC | #4"
-      - "🇷🇺 LTE | Beget | #5"
-      - "🇷🇺 LTE | "Domain | #6"
+      - "🇷🇺 Универсальный | JSC | #1"
+      - "🇷🇺 LTE | JSC | #2"
+      - "🇪🇪 LTE | OC | #3"
+      - "🇷🇺 LTE | "Domain | #4"
+      - "🇷🇺 LTE | "Domain | #5"
+      - "🇷🇺 LTE | Beget | #6"
       - "🇷🇺 LTE | "Domain | #7"
-      - "🇷🇺 LTE | "Domain | #8"
-      - "🇷🇺 LTE | LLC | #9"
-      - "🇷🇺 LTE | Yandex.Cloud | #10"
+      - "🇷🇺 LTE | LLC | #8"
+      - "🇷🇺 Сервер | JSC | #9"
+      - "🇱🇹 LTE | UAB | #10"
       - "🇷🇺 LTE | JSC | #11"
-      - "🇷🇺 Сервер | JSC | #12"
+      - "🇪🇪 LTE | OC | #12"
       - "🇷🇺 LTE | JSC | #13"
-      - "🇷🇺 LTE | Selectel | #14"
+      - "🇷🇺 LTE | JSC | #14"
       - "🇷🇺 LTE | JSC | #15"
       - "🇷🇺 LTE | JSC | #16"
       - "🇷🇺 LTE | JSC | #17"
       - "🇷🇺 LTE | JSC | #18"
-      - "🇷🇺 LTE | EdgeCenter | #19"
-      - "🇷🇺 LTE | JSC | #20"
-      - "🇪🇪 LTE | OC | #21"
-      - "🇱🇹 LTE | UAB | #22"
+      - "🇷🇺 LTE | "Domain | #19"
+      - "🇷🇺 Сервер | JSC | #20"
+      - "🇨🇭 LTE | WorkTitans | #21"
+      - "🇷🇺 LTE | JSC | #22"
       - "🇷🇺 LTE | JSC | #23"
-      - "🇷🇺 LTE | LLC | #24"
-      - "🇷🇺 LTE | JSC | #25"
-      - "🇷🇺 LTE | JSC | #26"
-      - "🇷🇺 LTE | JSC | #27"
-      - "🇷🇺 LTE | Yandex.Cloud | #28"
-      - "🇨🇭 LTE | WorkTitans | #29"
+      - "🇷🇺 LTE | JSC | #24"
+      - "🇫🇮 LTE | H2nexus | #25"
+      - "🇷🇺 LTE | Selectel | #26"
+      - "🇱🇻 LTE | RETN | #27"
+      - "🇨🇭 LTE | WorkTitans | #28"
+      - "🌐 LTE | bs.itg.top | #29"
       - "🇷🇺 LTE | JSC | #30"
-      - "🇷🇺 Сервер | JSC | #31"
-      - "🇷🇺 LTE | JSC | #32"
-      - "🌐 LTE | bs.itg.top | #33"
+      - "🇷🇺 LTE | JSC | #31"
+      - "🌐 LTE | tl.itg.top | #32"
+      - "🇷🇺 LTE | LLC | #33"
       - "🇷🇺 LTE | JSC | #34"
-      - "🇷🇺 LTE | JSC | #35"
-      - "🌐 LTE | tl.itg.top | #36"
-      - "🇷🇺 LTE | Yandex.Cloud | #37"
-      - "🇷🇺 LTE | Citytelecom | #38"
-      - "🇱🇻 LTE | RETN | #39"
-      - "🇷🇺 LTE | Yandex.Cloud | #40"
-      - "🇷🇺 Сервер | JSC | #41"
-      - "🌐 LTE | vl.itg.top | #42"
-      - "🌐 LTE | ds.itg.top | #43"
-      - "🇷🇺 LTE | Yandex.Cloud | #44"
-      - "🇫🇮 LTE | H2nexus | #45"
+      - "🇷🇺 LTE | Yandex.Cloud | #35"
+      - "🌐 LTE | vl.itg.top | #36"
+      - "🌐 LTE | ru-manage.node | #37"
+      - "🌐 LTE | ds.itg.top | #38"
+      - "🇪🇪 LTE | OC | #39"
+      - "🇪🇪 LTE | OC | #40"
+      - "🇷🇺 LTE | LLC | #41"
+      - "🇷🇺 LTE | Yandex.Cloud | #42"
+      - "🇪🇪 LTE | OC | #43"
+      - "🇩🇪 LTE | Play2go | #44"
+      - "🇪🇪 LTE | OC | #45"
       - "🇷🇺 LTE | LLC | #46"
-      - "🇷🇺 LTE | EdgeCenter | #47"
-      - "🇷🇺 LTE | Yandex.Cloud | #48"
+      - "🇩🇪 LTE | Play2go | #47"
+      - "🇫🇷 LTE | Aeza | #48"
       - "🇷🇺 LTE | LLC | #49"
-      - "🇷🇺 LTE | TimeWeb | #50"
-      - "🇷🇺 Сервер | JSC | #51"
+      - "🇷🇺 Сервер | JSC | #50"
+      - "🇩🇪 LTE | Play2go | #51"
       - "🇷🇺 Сервер | vds | #52"
-      - "🇷🇺 LTE | Yandex.Cloud | #53"
-      - "🇷🇺 LTE | Yandex.Cloud | #54"
-      - "🇷🇺 LTE | BlueVPS | #55"
-      - "🇷🇺 LTE | LLC | #56"
-      - "🇷🇺 LTE | Yandex.Cloud | #57"
-      - "🇳🇱 LTE | Play2go | #58"
-      - "🇫🇷 LTE | Aeza | #59"
-      - "🇷🇺 LTE | LLC | #60"
-      - "🇷🇺 LTE | Yandex.Cloud | #61"
-      - "🇷🇺 LTE | JSC | #62"
-      - "🇳🇱 LTE | Servers | #63"
-      - "🇷🇺 LTE | JSC | #64"
-      - "🇳🇱 LTE | EUROBYTE | #65"
-      - "🇷🇺 LTE | "Domain | #66"
-      - "🇷🇺 LTE | JSC | #67"
-      - "🌐 LTE | at.pfvpn.cfd | #68"
-      - "🌐 LTE | ru.appav.net | #69"
-      - "🇷🇺 LTE | Selectel | #70"
-      - "🇺🇸 LTE | Fast | #71"
-      - "🇫🇷 LTE | Aeza | #72"
+      - "🇳🇱 LTE | EUROBYTE | #53"
+      - "🇷🇺 LTE | LLC | #54"
+      - "🇩🇪 LTE | Play2go | #55"
+      - "🇷🇺 LTE | Yandex | #56"
+      - "🇷🇺 LTE | LLC | #57"
+      - "🇩🇪 LTE | Play2go | #58"
+      - "🇷🇺 LTE | LLC | #59"
+      - "🇷🇺 LTE | Yandex.Cloud | #60"
+      - "🇷🇺 LTE | EdgeCenter | #61"
+      - "🇫🇷 LTE | Aeza | #62"
+      - "🇷🇺 LTE | Citytelecom | #63"
+      - "🇷🇺 LTE | LLC | #64"
+      - "🇷🇺 LTE | Citytelecom | #65"
+      - "🇷🇺 LTE | LLC | #66"
+      - "🇷🇺 Сервер | JSC | #67"
+      - "🇷🇺 LTE | JSC | #68"
+      - "🇷🇺 LTE | BlueVPS | #69"
+      - "🇷🇺 LTE | Yandex.Cloud | #70"
+      - "🇳🇱 LTE | Play2go | #71"
+      - "🇷🇺 LTE | Yandex.Cloud | #72"
       - "🇷🇺 LTE | LLC | #73"
       - "🇷🇺 LTE | LLC | #74"
-      - "🇷🇺 LTE | LLC | #75"
-      - "🇷🇺 LTE | JSC | #76"
-      - "🇷🇺 LTE | Moscow | #77"
-      - "🇷🇺 LTE | LLC | #78"
-      - "🇷🇺 LTE | LLC | #79"
-      - "🇷🇺 LTE | JSC | #80"
-      - "🇷🇺 LTE | JSC | #81"
+      - "🇷🇺 Сервер | JSC | #75"
+      - "🇷🇺 LTE | Yandex | #76"
+      - "🇷🇺 LTE | LLC | #77"
+      - "🇷🇺 LTE | Reg.Ru | #78"
+      - "🇷🇺 LTE | Yandex | #79"
+      - "🇷🇺 LTE | Yandex | #80"
+      - "🇷🇺 Сервер | JSC | #81"
       - "🇷🇺 LTE | JSC | #82"
-      - "🇷🇺 LTE | LLC | #83"
-      - "🇷🇺 LTE | JSC | #84"
-      - "🇵🇱 LTE | Fast | #85"
-      - "🇰🇿 LTE | Newserverlife | #86"
-      - "🇷🇺 LTE | LLC | #87"
-      - "🇷🇺 Сервер | Delta | #88"
-      - "🇷🇺 LTE | LLC | #89"
-      - "🇷🇺 LTE | LLC | #90"
-      - "🇷🇺 LTE | JSC | #91"
-      - "🇷🇺 LTE | Selectel | #92"
-      - "🇷🇺 LTE | Selectel | #93"
-      - "🇷🇺 LTE | Selectel | #94"
-      - "🇷🇺 LTE | EdgeCenter | #95"
-      - "🇷🇺 LTE | Citytelecom | #96"
-      - "🇷🇺 LTE | LLC | #97"
-      - "🇫🇮 LTE | WAIcore | #98"
-      - "🌐 LTE | ru-manage.node | #99"
-      - "🇷🇺 LTE | Yandex.Cloud | #100"
-      - "🇹🇷 LTE | WorkTitans | #101"
-      - "🌐 LTE | ca.sky-node.or | #102"
-      - "🇷🇺 LTE | Hosting | #103"
-      - "🌐 LTE | in-fi-he.ray-b | #104"
-      - "🇵🇱 LTE | Newserverlife | #105"
-      - "🇷🇺 LTE | Hosting | #106"
-      - "🌐 LTE | de.nitroo-tech | #107"
-      - "🌐 LTE | ru.joseulloa.c | #108"
-      - "🌐 LTE | in-se-th-01.ra | #109"
-      - "🌐 LTE | ru.bujanoci.ne | #110"
-      - "🇷🇺 Сервер | JSC | #111"
-      - "🌐 LTE | pl.unit-digita | #112"
-      - "🌐 LTE | wl-ru-vk-02.ra | #113"
-      - "🌐 LTE | de.sky-node.or | #114"
-      - "🌐 LTE | wl-ru-vk-01.ra | #115"
-      - "🌐 LTE | ob.odavpn.onli | #116"
-      - "🌐 LTE | at.c2horizon.a | #117"
-      - "🌐 LTE | es.odavpn.onli | #118"
-      - "🌐 LTE | r1.serviceoda. | #119"
-      - "🌐 LTE | nu.serviceoda. | #120"
-      - "🌐 LTE | se.sky-node.or | #121"
-      - "🌐 LTE | pl.sky-node.or | #122"
-      - "🌐 LTE | nl-2.bereza-op | #123"
-      - "🇷🇺 LTE | Yandex.Cloud | #124"
-      - "🌐 LTE | ee.serviceoda. | #125"
-      - "🌐 LTE | nl-2.bereza-op | #126"
-      - "🇵🇱 LTE | Newserverlife | #127"
-      - "🌐 LTE | nl.sky-node.or | #128"
-      - "🌐 LTE | nd.nitroo-tech | #129"
-      - "🌐 LTE | la.nitroo-tech | #130"
-      - "🌐 LTE | kz.c2horizon.a | #131"
-      - "🇮🇱 LTE | WorkTitans | #132"
-      - "🌐 LTE | ru.nitroo-tech | #133"
-      - "🇷🇺 LTE | Global | #134"
-      - "🌐 LTE | ss.l90909l.vip | #135"
+      - "🇷🇺 LTE | JSC | #83"
+      - "🇷🇺 LTE | UFO | #84"
+      - "🇷🇺 LTE | Yandex.Cloud | #85"
+      - "🇷🇺 LTE | Yandex | #86"
+      - "🇷🇺 LTE | Yandex.Cloud | #87"
+      - "🇷🇺 LTE | LLC | #88"
+      - "🇷🇺 LTE | Yandex.Cloud | #89"
+      - "🇷🇺 LTE | JSC | #90"
+      - "🇷🇺 LTE | Moscow | #91"
+      - "🇷🇺 LTE | Yandex.Cloud | #92"
+      - "🇷🇺 LTE | JSC | #93"
+      - "🇷🇺 LTE | JSC | #94"
+      - "🇷🇺 LTE | Yandex | #95"
+      - "🇺🇸 LTE | Fast | #96"
+      - "🇷🇺 LTE | Yandex.Cloud | #97"
+      - "🇷🇺 LTE | LLC | #98"
+      - "🌐 LTE | ru.bujanoci.ne | #99"
+      - "🌐 LTE | pl.unit-digita | #100"
+      - "🇷🇺 LTE | LLC | #101"
+      - "🌐 LTE | wl-ru-vk-02.ra | #102"
+      - "🌐 LTE | wl-ru-vk-01.ra | #103"
+      - "🇷🇺 LTE | JSC | #104"
+      - "🇷🇺 LTE | TimeWeb | #105"
+      - "🇷🇺 LTE | LLC | #106"
+      - "🇷🇺 LTE | LLC | #107"
+      - "🇷🇺 LTE | JSC | #108"
+      - "🇷🇺 LTE | Yandex.Cloud | #109"
+      - "🇷🇺 LTE | LLC | #110"
+      - "🇷🇺 LTE | LLC | #111"
+      - "🌐 LTE | in-fi-he.ray-b | #112"
+      - "🌐 LTE | at.pfvpn.cfd | #113"
+      - "🇷🇺 LTE | Selectel | #114"
+      - "🇷🇺 LTE | Yandex.Cloud | #115"
+      - "🇷🇺 LTE | Hosting | #116"
+      - "🇷🇺 LTE | JSC | #117"
+      - "🇷🇺 LTE | JSC | #118"
+      - "🌐 LTE | es.odavpn.onli | #119"
+      - "🇷🇺 LTE | Yandex.Cloud | #120"
+      - "🌐 LTE | de.nodes.rocke | #121"
+      - "🌐 LTE | pl.nodes.rocke | #122"
+      - "🌐 LTE | lt.nodes.rocke | #123"
+      - "🌐 LTE | ru.joseulloa.c | #124"
+      - "🌐 LTE | se.sky-node.or | #125"
+      - "🇷🇺 LTE | Moscow | #126"
+      - "🌐 LTE | pl.sky-node.or | #127"
+      - "🇷🇺 LTE | Citytelecom | #128"
+      - "🌐 LTE | ca.sky-node.or | #129"
+      - "🌐 LTE | uk.sky-node.or | #130"
+      - "🇷🇺 LTE | Hosting | #131"
+      - "🇷🇺 Сервер | JSC | #132"
+      - "🇷🇸 LTE | Maxim | #133"
+      - "🇷🇺 LTE | "Domain | #134"
+      - "🌐 LTE | in-se-th-01.ra | #135"
       - "🇷🇺 LTE | EdgeCenter | #136"
-      - "🌐 LTE | se.c2horizon.a | #137"
-      - "🇳🇱 LTE | Fast | #138"
-      - "🇷🇺 LTE | Yandex | #139"
-      - "🇺🇸 LTE | WorkTitans | #140"
-      - "🇷🇺 LTE | LLC | #141"
-      - "🌐 LTE | bg.c2horizon.a | #142"
-      - "🇷🇺 LTE | Global | #143"
-      - "🇷🇺 LTE | LLC | #144"
-      - "🇺🇸 LTE | tzulo, | #145"
+      - "🇵🇱 LTE | Newserverlife | #137"
+      - "🇵🇱 LTE | Newserverlife | #138"
+      - "🌐 LTE | ob.odavpn.onli | #139"
+      - "🌐 LTE | nl.sky-node.or | #140"
+      - "🌐 LTE | la.nitroo-tech | #141"
+      - "🇮🇱 LTE | WorkTitans | #142"
+      - "🌐 LTE | ru.nitroo-tech | #143"
+      - "🌐 LTE | nd.nitroo-tech | #144"
+      - "🌐 LTE | se.c2horizon.a | #145"
+      - "🇧🇦 LTE | WorkTitans | #146"
+      - "🇺🇸 LTE | WorkTitans | #147"
+      - "🇷🇺 LTE | Selectel | #148"
+      - "🇷🇺 LTE | Yandex.Cloud | #149"
+      - "🇷🇺 LTE | Selectel | #150"
+      - "🇷🇺 LTE | LLC | #151"
+      - "🇷🇺 LTE | LLC | #152"
 rules:
   - "GEOIP,RU,DIRECT"
   - "MATCH,🔀 Выбор"
