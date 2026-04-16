@@ -1,24 +1,63 @@
-import os, json, subprocess, requests, re, time
+import os, json, subprocess, requests, re, time, socket, base64
 from urllib.parse import parse_qs
 from datetime import datetime
 
-RAW_URL = "https://loginvkcom.vercel.app/sub"
-TEST_URL = "https://httpbin.org/status/200"
-TIMEOUT = 5
-RESULT_FILE = "working_keys.txt"
+# 🔧 
+SOURCES = [
+    "https://loginvkcom.vercel.app/sub",
+]
 
-def get_keys():
-    try:
-        r = requests.get(RAW_URL, timeout=10)
-        return [l.strip() for l in r.text.splitlines() if l.startswith("vless://")]
-    except Exception as e:
-        print(f"[!] Ошибка скачивания: {e}")
-        return []
+#  WHITELIST_DOMAINS = ["cf-ip.com", "example.net"]
+WHITELIST_DOMAINS = []
+
+TEST_URLS = [
+    "https://1.1.1.1",
+    "https://httpbin.org/status/200"
+]
+
+TIMEOUT_TCP = 2
+TIMEOUT_PROXY = 5
+RESULT_FILE = "working_keys.txt"
+LOG_FILE = "checker.log"
+
+HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+
+def log(msg):
+    ts = datetime.now().strftime("%H:%M:%S")
+    line = f"[{ts}] {msg}"
+    print(line)
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(line + "\n")
+
+def fetch_keys():
+    raw = ""
+    for url in SOURCES:
+        try:
+            log(f"📥 Загрузка: {url}")
+            r = requests.get(url, headers=HEADERS, timeout=10)
+            r.raise_for_status()
+            txt = r.text.strip()
+            if txt and "\n" not in txt and re.match(r'^[A-Za-z0-9+/=]+$', txt):
+                txt = base64.b64decode(txt).decode("utf-8", errors="ignore")
+            raw += "\n" + txt
+        except Exception as e:
+            log(f"⚠️ Ошибка загрузки {url}: {e}")
+
+    seen = set()
+    valid = []
+    vless_re = re.compile(r"^vless://[^@]+@[^:]+:\d+\?")
+    for line in raw.splitlines():
+        line = line.strip()
+        if not line or line in seen or not vless_re.match(line):
+            continue
+        seen.add(line)
+        valid.append(line)
+    return valid
 
 def parse_vless(url):
-    match = re.match(r"vless://([^@]+)@([^:]+):(\d+)\?(.*)", url)
-    if not match: return None
-    uuid, host, port, params = match.groups()
+    m = re.match(r"vless://([^@]+)@([^:]+):(\d+)\?(.*)", url)
+    if not m: return None
+    uuid, host, port, params = m.groups()
     qs = parse_qs(params)
     return {
         "uuid": uuid, "host": host, "port": int(port),
@@ -29,56 +68,124 @@ def parse_vless(url):
         "header": qs.get("host", [host])[0]
     }
 
-def make_config(p):
+def check_tcp(host, port):
+    try:
+        with socket.create_connection((host, port), timeout=TIMEOUT_TCP) as s:
+            return True
+    except:
+        return False
+
+def make_sb_config(p):
     cfg = {
-        "log": {"level": "none"},
+        "log": {"level": "warning"},
         "inbounds": [{"type": "http", "listen": "127.0.0.1", "listen_port": 10808}],
         "outbounds": [{
             "type": "vless", "tag": "test",
             "server": p["host"], "server_port": p["port"], "uuid": p["uuid"],
-            "transport": {"type": p["type"], "path": p["path"], "headers": {"Host": p["header"]}},
-            "tls": {"enabled": True, "server_name": p["sni"]} if p["security"] == "tls" else None
+            "transport": {
+                "type": p["type"],
+                "path": p["path"],
+                "headers": {"Host": p["header"]}
+            },
+            "tls": {
+                "enabled": p["security"] == "tls",
+                "server_name": p["sni"],
+                "utls": {"enabled": True, "fingerprint": "chrome"}
+            } if p["security"] == "tls" else None
         }]
     }
     return cfg
 
-def test_key(url):
-    p = parse_vless(url)
+def check_proxy(key):
+    p = parse_vless(key)
     if not p: return False
-    cfg_path = "/data/data/com.termux/files/usr/tmp/sb_test.json"
-    with open(cfg_path, "w") as f: json.dump(make_config(p), f)
-    proc = subprocess.Popen(["sing-box", "run", "-c", cfg_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    time.sleep(2)
+
+    cfg_path = f"/data/data/com.termux/files/usr/tmp/sb_{os.getpid()}.json"
+    with open(cfg_path, "w") as f:
+        json.dump(make_sb_config(p), f)
+
+    proc = subprocess.Popen(
+        ["sing-box", "run", "-c", cfg_path],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    )
+    time.sleep(1.5)  # ждём инициализации прокси
+
     ok = False
+    for test_url in TEST_URLS:
+        try:
+            r = requests.head(
+                test_url,
+                proxies={"http": "http://127.0.0.1:10808", "https": "http://127.0.0.1:10808"},
+                timeout=TIMEOUT_PROXY,
+                allow_redirects=True
+            )
+            if 200 <= r.status_code < 400:
+                ok = True
+                break
+        except:
+            continue
+
+    proc.terminate()
     try:
-        r = requests.head(TEST_URL, proxies={"http": "http://127.0.0.1:10808", "https": "http://127.0.0.1:10808"}, timeout=TIMEOUT)
-        if r.status_code == 200: ok = True
-    except: pass
-    finally:
-        proc.terminate()
-        try: proc.wait(timeout=2)
-        except: pass
-        if os.path.exists(cfg_path): os.remove(cfg_path)
+        proc.wait(timeout=2)
+    except:
+        pass
+    if os.path.exists(cfg_path):
+        os.remove(cfg_path)
+
     return ok
 
-def main():
-    print("[*] Загрузка списка...")
-    keys = get_keys()
-    if not keys: print("[!] Список пуст"); return
-    working = []
-    for i, k in enumerate(keys, 1):
-        print(f"[*] [{i}/{len(keys)}] Проверка: {k[:40]}...")
-        if test_key(k):
-            working.append(k)
-            print("[+] Рабочий!")
-        time.sleep(0.5)
-    with open(RESULT_FILE, "w") as f: f.write("\n".join(working))
-    print(f"[✓] Найдено рабочих: {len(working)}")
+def git_push(count):
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     os.system("git add .")
-    msg = datetime.now().strftime("%Y-%m-%d %H:%M")
-    os.system(f'git commit -m "Auto update {msg}" || true')
+    msg = f"Auto update: {count} working keys | {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+    rc = os.system(f'git diff --staged --quiet || git commit -m "{msg}"')
+    if rc == 0:
+        log("ℹ️ Нет изменений или ошибка коммита")
+        return
+    log("⬆️ Push на GitHub...")
     os.system("git push -q origin main")
-    print("[✓] Отправлено на GitHub")
+
+def main():
+    log("🚀 === ЗАПУСК ПАРСЕРА ===")
+    keys = fetch_keys()
+    if not keys:
+        log("❌ Список пуст. Проверь источники и интернет.")
+        return
+
+    log(f"📋 Найдено уникальных валидных ключей: {len(keys)}")
+    working = []
+    total = len(keys)
+
+    for i, k in enumerate(keys, 1):
+        p = parse_vless(k)
+        if not p:
+            log(f"❌ [{i}/{total}] Мусорный формат: {k[:30]}...")
+            continue
+
+        if WHITELIST_DOMAINS and p["host"] not in WHITELIST_DOMAINS:
+            log(f"🚫 [{i}/{total}] Не в вайтлисте: {p['host']}")
+            continue
+
+        log(f"🔌 [{i}/{total}] TCP {p['host']}:{p['port']}...")
+        if not check_tcp(p["host"], p["port"]):
+            log(f"⛔ TCP down → пропускаем")
+            continue
+
+        log(f"🌐 [{i}/{total}] Proxy HEAD...")
+        if check_proxy(k):
+            working.append(k)
+            log(f"✅ РАБОЧИЙ!")
+        else:
+            log(f"❌ Proxy failed")
+        time.sleep(0.2) 
+
+    with open(RESULT_FILE, "w", encoding="utf-8") as f:
+        f.write("\n".join(working))
+
+    log(f"🏁 Готово. Рабочих: {len(working)}/{total}")
+    git_push(len(working))
+    log("✅ Скрипт завершил работу.")
 
 if __name__ == "__main__":
     main()
