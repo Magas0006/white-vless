@@ -309,8 +309,8 @@ def _make_announce(updated_at: str) -> str:
         f"🕐 Обновлено: {updated_at} UTC\n\n"
         "📖 Как подключиться:\n"
         "1️⃣  Нажмите кнопку обновления подписки (🔄)\n"
-        "2️⃣  Нажмите кнопку пинга серверя рядом(🕒)\n"
-        "3️⃣  Выберите сервер с наименьшим пингом (лучше до 100 мс ⚡)\n\n"
+        "2️⃣  Нажмите кнопку пинга сервера рядом(🕒)\n"
+        "3️⃣  Выберите сервер с наименьшим пингом (100 мс ⚡)\n\n"
         "⚠️  Не заходите на российские сайты через VPN!\n"
         "    Это замедляет соединение и может вызвать блокировку."
     )
@@ -525,15 +525,24 @@ async def main():
         deduped2 = _dedup(ru_filtered)
         log.info(f"[sub2] after dedup: {len(deduped2)}")
 
-        sem2 = asyncio.Semaphore(CONCURRENCY)
-        alive2 = await check_batch(deduped2, sem2)
-        log.info(f"[sub2] alive: {len(alive2)}")
+        # TCP-проверка с GitHub Actions бесполезна для RU IP — серверы недоступны из США/EU.
+        # Сортируем по приоритету порта: 443 первым, остальные по возрастанию.
+        def _port_priority(key):
+            port = _extract(key, "port")
+            return 0 if port == 443 else port
 
-        selected2 = alive2[:MAX_KEYS_2]
-        await geo_lookup(session, list(dict.fromkeys(_extract(k, "host") for _, k in selected2)))
+        selected2 = sorted(deduped2, key=_port_priority)[:MAX_KEYS_2]
+        log.info(f"[sub2] selected (no TCP check): {len(selected2)}")
 
-        write_output_2(selected2)
-        write_clash_2(selected2)
+        await geo_lookup(session, list(dict.fromkeys(_extract(k, "host") for k in selected2)))
+
+        # wrap в (0, key) чтобы не менять write_output_2 / write_clash_2
+        selected2_with_lat = [(0, k) for k in selected2]
+        write_output_2(selected2_with_lat)
+        write_clash_2(selected2_with_lat)
+
+        write_output_2(selected2_with_lat)
+        write_clash_2(selected2_with_lat)
         log.info(f"[sub2] done: {len(selected2)} keys")
 
 
