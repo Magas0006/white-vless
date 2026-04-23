@@ -8,24 +8,41 @@ import base64
 import os
 import time
 import logging
+import ipaddress
+import socket
+from datetime import datetime, timezone
 from html import unescape as html_unescape
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse, quote
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger("whitevless")
 
-# ── paths ─────────────────────────────────────────────────────────────────────
-BASE_DIR       = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_FILE    = os.path.join(BASE_DIR, "filtered_vless_keys.txt")
-DIRECT_FILE    = os.path.join(BASE_DIR, "sources", "direct.txt")
-BLACKLIST_FILE = os.path.join(BASE_DIR, "blacklist", "vless_blacklist.txt")
-CLASH_FILE     = os.path.join(BASE_DIR, "clash.yaml")
+# paths
+BASE_DIR        = os.path.dirname(os.path.abspath(__file__))
+OUTPUT_FILE     = os.path.join(BASE_DIR, "filtered_vless_keys.txt")
+OUTPUT_FILE_2   = os.path.join(BASE_DIR, "filtered_vless_keys_2.txt")
+DIRECT_FILE     = os.path.join(BASE_DIR, "sources", "direct.txt")
+TEST_FILE       = os.path.join(BASE_DIR, "sources", "Test.txt")
+BLACKLIST_FILE  = os.path.join(BASE_DIR, "blacklist", "vless_blacklist.txt")
+CLASH_FILE      = os.path.join(BASE_DIR, "clash.yaml")
+CLASH_FILE_2    = os.path.join(BASE_DIR, "clash_2.yaml")
 
-# ── settings ──────────────────────────────────────────────────────────────────
+# settings
 MAX_KEYS     = 200
+MAX_KEYS_2   = 300
 MAX_PER_HOST = 3
 TCP_TIMEOUT  = 6.0
 CONCURRENCY  = 80
+
+# RU IP ranges for subscription 2 (Yandex, VK, Mail.ru, Selectel, Majordomo)
+_RU_NETWORKS_RAW = [
+    "158.160.0.0/16", "130.193.32.0/19", "51.250.0.0/16", "84.201.128.0/17",  # Yandex
+    "84.23.52.0/22", "95.163.248.0/22", "79.137.174.0/23", "37.139.32.0/22", "90.156.151.0/24",  # VK
+    "5.188.136.0/21", "5.188.140.0/24",  # Mail.ru
+    "95.213.128.0/17", "92.53.64.0/19", "77.244.208.0/20", "188.225.0.0/18", "178.236.128.0/20",  # Selectel
+    "178.250.240.0/21",  # Majordomo
+]
+RU_NETWORKS = [ipaddress.ip_network(n, strict=False) for n in _RU_NETWORKS_RAW]
 
 UUID_RE   = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$', re.I)
 ARABIC_RE = re.compile(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]')
@@ -34,11 +51,23 @@ SPAM_RE   = re.compile(r'(t\.me|telegram\.(me|org|dog)|@[\w_]{3,}|купить|�
 BLOCKLIST_EXACT:   set[str] = set()
 BLOCKLIST_PARTIAL: set[str] = set()
 
-# ── helpers ───────────────────────────────────────────────────────────────────
+
+def _ip_in_ru_networks(host: str) -> bool:
+    try:
+        addr = ipaddress.ip_address(host)
+    except ValueError:
+        try:
+            addr = ipaddress.ip_address(socket.gethostbyname(host))
+        except Exception:
+            return False
+    return any(addr in net for net in RU_NETWORKS)
+
+
 def _lines(path):
     if not os.path.exists(path): return []
     with open(path, encoding="utf-8", errors="ignore") as f:
         return [l.strip() for l in f if l.strip() and not l.startswith("#")]
+
 
 def load_blocklist():
     if not os.path.exists(BLACKLIST_FILE): return
@@ -47,38 +76,35 @@ def load_blocklist():
             line = line.strip()
             if not line or line.startswith("#"): continue
             if line.startswith("vless://"):
-                # store only the part before '#' (strip remark) lowercased
                 BLOCKLIST_EXACT.add(line.split("#")[0].lower())
             else:
                 BLOCKLIST_PARTIAL.add(line.lower())
     log.info(f"blocklist: exact={len(BLOCKLIST_EXACT)}, partial={len(BLOCKLIST_PARTIAL)}")
 
-# ── key parsing ───────────────────────────────────────────────────────────────
+
 def _extract(link, part):
     try:
         p = urlparse(link)
         if part == "host": return p.hostname or ""
-        if part == "port":
-            return p.port if p.port and 1 <= p.port <= 65535 else 0
+        if part == "port": return p.port if p.port and 1 <= p.port <= 65535 else 0
         if part == "params": return {k: v[0] for k, v in parse_qs(p.query).items()}
     except: pass
     return "" if part != "port" else 0
 
+
 def _valid_uuid(u):
     return bool(UUID_RE.match(u)) if u else False
 
+
 def _is_blocked(key):
-    # check against the base key (no remark) so exact match works regardless of remark
     base = key.split("#")[0].lower()
     if base in BLOCKLIST_EXACT: return True
-    # check partial patterns against full key (including remark) to catch @channel patterns
-    full = key.lower()
-    return any(p in full for p in BLOCKLIST_PARTIAL)
+    return any(p in key.lower() for p in BLOCKLIST_PARTIAL)
+
 
 def _clean(raw):
     key = raw.strip()
     if not key.startswith("vless://"): return None
-    # reject suspiciously long keys (normal keys are well under 1000 chars)
     if len(key) > 1000: return None
     base = ARABIC_RE.sub("", key.split("#")[0])
     if SPAM_RE.search(base): return None
@@ -90,21 +116,17 @@ def _clean(raw):
         if not (1 <= p.port <= 65535): return None
     except: return None
     params = {k: v[0] for k, v in parse_qs(urlparse(base).query).items()}
-    # reject non-standard encryption values (valid VLESS only uses "none")
-    enc = params.get("encryption", "none")
-    if enc != "none": return None
-    # reject unknown/experimental params that break clients
+    if params.get("encryption", "none") != "none": return None
     if "pqv" in params: return None
     if params.get("security") == "reality" and "fp" not in params:
         params["fp"] = "chrome"
-        parsed = urlparse(base)
-        base = urlunparse(parsed._replace(query=urlencode(params)))
+        base = urlunparse(urlparse(base)._replace(query=urlencode(params)))
     return base
+
 
 def _parse_text(text):
     text = html_unescape(text)
     text = re.sub(r'&amp%3B|%26amp%3B', '&', text, flags=re.I)
-    # автодетект base64-подписки
     stripped = text.strip()
     if stripped and "vless://" not in stripped[:200]:
         try:
@@ -121,7 +143,7 @@ def _parse_text(text):
             if k: keys.append(k)
     return keys
 
-# ── fetching ──────────────────────────────────────────────────────────────────
+
 async def _get(session, url):
     try:
         async with session.get(url, headers={"Accept": "text/plain, */*"},
@@ -133,34 +155,45 @@ async def _get(session, url):
         log.debug(f"fetch {url}: {e}")
     return ""
 
+
 async def fetch_direct(session):
-    urls = [line for line in _lines(DIRECT_FILE) if line.startswith("http")]
+    urls = [u for u in _lines(DIRECT_FILE) if u.startswith("http")]
     if not urls: return []
     log.info(f"direct sources: {len(urls)}")
-    priority_text = await _get(session, urls[0])
-    rest_texts = await asyncio.gather(*[_get(session, u) for u in urls[1:]])
+    texts = await asyncio.gather(*[_get(session, u) for u in urls])
     keys = []
-    for url, text in zip(urls, [priority_text] + list(rest_texts)):
+    for url, text in zip(urls, texts):
         found = _parse_text(text)
         log.info(f"  {url.split('/')[-1][:50]}: {len(found)} keys")
         keys.extend(found)
     return keys
 
-# ── TCP / TLS check ───────────────────────────────────────────────────────────
+
+async def fetch_test(session):
+    urls = [u for u in _lines(TEST_FILE) if u.startswith("http")]
+    if not urls: return []
+    log.info(f"[sub2] test sources: {len(urls)}")
+    texts = await asyncio.gather(*[_get(session, u) for u in urls])
+    keys = []
+    for url, text in zip(urls, texts):
+        found = _parse_text(text)
+        log.info(f"  [sub2] {url.split('/')[-1][:50]}: {len(found)} keys")
+        keys.extend(found)
+    return keys
+
+
 async def tcp_check(host, port) -> float:
-    """Plain TCP connect — just checks port is open."""
     try:
         start = time.monotonic()
-        _, writer = await asyncio.wait_for(
-            asyncio.open_connection(host, port), timeout=TCP_TIMEOUT)
+        _, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout=TCP_TIMEOUT)
         writer.close()
         try: await writer.wait_closed()
         except: pass
         return (time.monotonic() - start) * 1000
     except: return -1.0
 
+
 async def tls_check(host, port, sni) -> float:
-    """TLS handshake with the given SNI — confirms a real TLS server is behind the port."""
     import ssl
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
@@ -168,56 +201,44 @@ async def tls_check(host, port, sni) -> float:
     try:
         start = time.monotonic()
         _, writer = await asyncio.wait_for(
-            asyncio.open_connection(host, port, ssl=ctx, server_hostname=sni),
-            timeout=TCP_TIMEOUT)
+            asyncio.open_connection(host, port, ssl=ctx, server_hostname=sni), timeout=TCP_TIMEOUT)
         writer.close()
         try: await writer.wait_closed()
         except: pass
         return (time.monotonic() - start) * 1000
     except: return -1.0
 
+
 async def probe_key(key) -> float:
-    """
-    Smart probe:
-    - reality/tls keys → TLS handshake with SNI from key params
-    - plain tcp keys   → TCP connect + send a byte, expect no immediate RST
-    Falls back to plain TCP if TLS handshake fails (some reality servers
-    intentionally drop non-VLESS TLS, but at least the port is open).
-    """
     host   = _extract(key, "host")
     port   = _extract(key, "port")
     params = _extract(key, "params")
-    if not host or not port:
-        return -1.0
+    if not host or not port: return -1.0
 
     sec = params.get("security", "")
     sni = params.get("sni", "")
 
     if sec in ("reality", "tls") and sni:
         lat = await tls_check(host, port, sni)
-        if lat > 0:
-            return lat
-        # TLS failed — reality servers may reject non-VLESS handshakes,
-        # fall back to plain TCP so we don't discard a potentially live server
+        if lat > 0: return lat
+
         return await tcp_check(host, port)
 
-    # For plain/ws/grpc: TCP connect + write probe byte
     try:
         start = time.monotonic()
-        reader, writer = await asyncio.wait_for(
-            asyncio.open_connection(host, port), timeout=TCP_TIMEOUT)
+        reader, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout=TCP_TIMEOUT)
         writer.write(b"\x00")
         await writer.drain()
-        # give server 1s to respond or keep connection open (not RST immediately)
         try:
             await asyncio.wait_for(reader.read(1), timeout=1.0)
         except asyncio.TimeoutError:
-            pass  # timeout is fine — server is alive, just waiting for real data
+            pass
         writer.close()
         try: await writer.wait_closed()
         except: pass
         return (time.monotonic() - start) * 1000
     except: return -1.0
+
 
 async def check_batch(keys, sem):
     async def _one(key):
@@ -228,12 +249,14 @@ async def check_batch(keys, sem):
     results = await asyncio.gather(*[_one(k) for k in keys])
     return sorted([r for r in results if r], key=lambda x: x[0])
 
-# ── geo lookup ────────────────────────────────────────────────────────────────
+
 GEO_CACHE: dict[str, dict] = {}
+
 
 def _cc_flag(cc):
     if len(cc) != 2: return "🌐"
     return chr(ord(cc[0]) + 127397) + chr(ord(cc[1]) + 127397)
+
 
 async def geo_lookup(session, hosts):
     unique = list(dict.fromkeys(hosts))
@@ -253,8 +276,9 @@ async def geo_lookup(session, hosts):
         except Exception as e: log.debug(f"geo batch: {e}")
         await asyncio.sleep(1.0)
 
-# ── remark builder ────────────────────────────────────────────────────────────
+
 _COUNTER = {"n": 0}
+
 
 def _build_remark(key, lat):
     host   = _extract(key, "host")
@@ -276,15 +300,25 @@ def _build_remark(key, lat):
     isp_short = isp.split()[0][:14] if isp else host[:14]
     return f"{flag} {prefix} | {isp_short} | #{_COUNTER['n']}"
 
-# ── output ────────────────────────────────────────────────────────────────────
+
 def _b64e(s): return base64.b64encode(s.encode()).decode()
 
-def write_output(keys_with_lat):
-    announce = (
-        "Как пользоваться:\n1. Нажмите на иконку где 2 стрелки\n2. Нажмите на иконку правее.\n"
-        "3. Выберите сервер где меньше всего ms (100ms)\n"
-        "Не заходите на рф сервисы через VPN!"
+
+def _make_announce(updated_at: str) -> str:
+    return (
+        f"🕐 Обновлено: {updated_at} UTC\n\n"
+        "📖 Как подключиться:\n"
+        "1️⃣  Нажмите кнопку обновления подписки (🔄)\n"
+        "2️⃣  Нажмите кнопку пинга серверя рядом(🕒)\n"
+        "3️⃣  Выберите сервер с наименьшим пингом (лучше до 100 мс ⚡)\n\n"
+        "⚠️  Не заходите на российские сайты через VPN!\n"
+        "    Это замедляет соединение и может вызвать блокировку."
     )
+
+
+def write_output(keys_with_lat):
+    updated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+    announce = _make_announce(updated_at)
     header = "\n".join([
         f"#profile-title: base64:{_b64e('👾WhiteVless')}",
         "#profile-update-interval: 2",
@@ -295,20 +329,40 @@ def write_output(keys_with_lat):
     _COUNTER["n"] = 0
     lines = []
     for lat, key in keys_with_lat:
-        remark = _build_remark(key, lat)
-        lines.append(f"{key}#{quote(remark)}")
+        lines.append(f"{key}#{quote(_build_remark(key, lat))}")
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         f.write(header)
         for l in lines: f.write(l + "\n")
     log.info(f"written {len(lines)} keys → {OUTPUT_FILE}")
 
-# ── clash output ──────────────────────────────────────────────────────────────
-def write_clash(keys_with_lat):
+
+def write_output_2(keys_with_lat):
+    updated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+    announce = _make_announce(updated_at)
+    header = "\n".join([
+        f"#profile-title: base64:{_b64e('👾WhiteVless RU')}",
+        "#profile-update-interval: 2",
+        "#support-url: https://github.com/plsn1337/white-vless/",
+        "#profile-web-page-url: https://github.com/plsn1337/white-vless/",
+        f"#announce: base64:{_b64e(announce)}", "",
+    ])
+    _COUNTER["n"] = 0
+    lines = []
+    for lat, key in keys_with_lat:
+        lines.append(f"{key}#{quote(_build_remark(key, lat))}")
+    with open(OUTPUT_FILE_2, "w", encoding="utf-8") as f:
+        f.write(header)
+        for l in lines: f.write(l + "\n")
+    log.info(f"[sub2] written {len(lines)} keys → {OUTPUT_FILE_2}")
+
+
+def _build_clash_config(keys_with_lat, clash_file, title):
     def _proxy(key, name):
         try:
             p = urlparse(key)
             params = {k: v[0] for k, v in parse_qs(p.query).items()}
-            sec = params.get("security", ""); tp = params.get("type", "tcp")
+            sec = params.get("security", "")
+            tp  = params.get("type", "tcp")
             proxy = {"name": name, "type": "vless", "server": p.hostname,
                      "port": p.port, "uuid": p.username, "udp": True}
             flow = params.get("flow", "")
@@ -389,12 +443,33 @@ def write_clash(keys_with_lat):
         ],
         "rules": ["GEOIP,RU,DIRECT", "MATCH,🔀 Выбор"],
     }
-    with open(CLASH_FILE, "w", encoding="utf-8") as f:
-        f.write("# WhiteVless — Clash Meta config\n")
+    with open(clash_file, "w", encoding="utf-8") as f:
+        f.write(f"# {title} — Clash Meta config\n")
         f.write(_yaml(cfg) + "\n")
-    log.info(f"written clash: {len(proxies)} proxies → {CLASH_FILE}")
+    log.info(f"written clash: {len(proxies)} proxies → {clash_file}")
 
-# ── main ──────────────────────────────────────────────────────────────────────
+
+def write_clash(keys_with_lat):
+    _build_clash_config(keys_with_lat, CLASH_FILE, "WhiteVless")
+
+
+def write_clash_2(keys_with_lat):
+    _build_clash_config(keys_with_lat, CLASH_FILE_2, "WhiteVless RU")
+
+
+def _dedup(keys):
+    seen_ep, host_count, result = set(), {}, []
+    for key in keys:
+        host = _extract(key, "host")
+        ep   = f"{host}:{_extract(key, 'port')}"
+        if ep in seen_ep: continue
+        if host_count.get(host, 0) >= MAX_PER_HOST: continue
+        seen_ep.add(ep)
+        host_count[host] = host_count.get(host, 0) + 1
+        result.append(key)
+    return result
+
+
 async def main():
     load_blocklist()
 
@@ -402,39 +477,56 @@ async def main():
     ua = {"User-Agent": "Mozilla/5.0 (compatible; WhiteVless/5.0)"}
 
     async with aiohttp.ClientSession(connector=connector, headers=ua) as session:
-        # 1. collect
-        all_keys = await fetch_direct(session)
-        log.info(f"total collected: {len(all_keys)}")
 
-        # 2. dedup by endpoint + max 3 keys per host
-        seen_ep, host_count, deduped = set(), {}, []
-        for key in all_keys:
-            host = _extract(key, "host")
-            ep   = f"{host}:{_extract(key, 'port')}"
-            if ep in seen_ep: continue
-            if host_count.get(host, 0) >= MAX_PER_HOST: continue
-            seen_ep.add(ep)
-            host_count[host] = host_count.get(host, 0) + 1
-            deduped.append(key)
+        # ── Подписка 1: direct.txt → filtered_vless_keys.txt ─────────────────
+        all_keys = await fetch_direct(session)
+        log.info(f"collected: {len(all_keys)}")
+
+        deduped = _dedup(all_keys)
         log.info(f"after dedup: {len(deduped)}")
 
-        # 3. TCP check 
         sem = asyncio.Semaphore(CONCURRENCY)
         alive = await check_batch(deduped, sem)
-        log.info(f"alive after TCP: {len(alive)}")
+        log.info(f"alive: {len(alive)}")
 
-        # 4. cap at MAX_KEYS
         selected = alive[:MAX_KEYS]
-        log.info(f"selected: {len(selected)}")
+        await geo_lookup(session, list(dict.fromkeys(_extract(k, "host") for _, k in selected)))
 
-        # 5. geo lookup
-        hosts = list(dict.fromkeys(_extract(k, "host") for _, k in selected))
-        await geo_lookup(session, hosts)
-
-        # 6. write
         write_output(selected)
         write_clash(selected)
-        log.info(f"done: {len(selected)} keys")
+        log.info(f"sub1 done: {len(selected)} keys")
+
+        # ── Подписка 2: Test.txt → filtered_vless_keys_2.txt (только RU IP) ──
+        log.info("=" * 60)
+        all_keys_2 = await fetch_test(session)
+        log.info(f"[sub2] collected: {len(all_keys_2)}")
+
+        if not all_keys_2:
+            log.info("[sub2] no sources in Test.txt, skipping")
+            return
+
+        loop = asyncio.get_event_loop()
+        ru_filtered = []
+        for key in all_keys_2:
+            host = _extract(key, "host")
+            if host and await loop.run_in_executor(None, _ip_in_ru_networks, host):
+                ru_filtered.append(key)
+        log.info(f"[sub2] after RU IP filter: {len(ru_filtered)}")
+
+        deduped2 = _dedup(ru_filtered)
+        log.info(f"[sub2] after dedup: {len(deduped2)}")
+
+        sem2 = asyncio.Semaphore(CONCURRENCY)
+        alive2 = await check_batch(deduped2, sem2)
+        log.info(f"[sub2] alive: {len(alive2)}")
+
+        selected2 = alive2[:MAX_KEYS_2]
+        await geo_lookup(session, list(dict.fromkeys(_extract(k, "host") for _, k in selected2)))
+
+        write_output_2(selected2)
+        write_clash_2(selected2)
+        log.info(f"[sub2] done: {len(selected2)} keys")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
