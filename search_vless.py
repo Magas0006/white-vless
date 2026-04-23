@@ -221,7 +221,7 @@ async def probe_key(key) -> float:
     if sec in ("reality", "tls") and sni:
         lat = await tls_check(host, port, sni)
         if lat > 0: return lat
-
+        # reality серверы могут отклонять не-VLESS TLS — пробуем plain TCP
         return await tcp_check(host, port)
 
     try:
@@ -505,12 +505,21 @@ async def main():
             log.info("[sub2] no sources in Test.txt, skipping")
             return
 
+        # резолвим все уникальные хосты параллельно
+        unique_hosts = list(dict.fromkeys(_extract(k, "host") for k in all_keys_2 if _extract(k, "host")))
+        log.info(f"[sub2] resolving {len(unique_hosts)} unique hosts...")
         loop = asyncio.get_event_loop()
-        ru_filtered = []
-        for key in all_keys_2:
-            host = _extract(key, "host")
-            if host and await loop.run_in_executor(None, _ip_in_ru_networks, host):
-                ru_filtered.append(key)
+        sem_dns = asyncio.Semaphore(200)
+
+        async def _check_host(host):
+            async with sem_dns:
+                return host, await loop.run_in_executor(None, _ip_in_ru_networks, host)
+
+        results = await asyncio.gather(*[_check_host(h) for h in unique_hosts])
+        ru_hosts = {h for h, ok in results if ok}
+        log.info(f"[sub2] hosts in RU ranges: {len(ru_hosts)}")
+
+        ru_filtered = [k for k in all_keys_2 if _extract(k, "host") in ru_hosts]
         log.info(f"[sub2] after RU IP filter: {len(ru_filtered)}")
 
         deduped2 = _dedup(ru_filtered)
