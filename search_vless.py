@@ -10,6 +10,7 @@ import time
 import logging
 import ipaddress
 import socket
+import json
 from datetime import datetime, timezone
 from html import unescape as html_unescape
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse, quote
@@ -17,7 +18,6 @@ from urllib.parse import urlparse, parse_qs, urlencode, urlunparse, quote
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger("whitevless")
 
-# paths
 BASE_DIR        = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_FILE     = os.path.join(BASE_DIR, "filtered_vless_keys.txt")
 OUTPUT_FILE_2   = os.path.join(BASE_DIR, "filtered_vless_keys_2.txt")
@@ -25,24 +25,27 @@ DIRECT_FILE     = os.path.join(BASE_DIR, "sources", "direct.txt")
 TEST_FILE       = os.path.join(BASE_DIR, "sources", "Test.txt")
 BLACKLIST_FILE  = os.path.join(BASE_DIR, "blacklist", "vless_blacklist.txt")
 CLASH_FILE      = os.path.join(BASE_DIR, "clash.yaml")
-CLASH_FILE_2    = os.path.join(BASE_DIR, "clash_2.yaml")
+ROUTING_PROFILES_FILE = os.path.join(BASE_DIR, "routing_profiles", "profiles.json")
 
-# settings
 MAX_KEYS     = 200
 MAX_KEYS_2   = 300
 MAX_PER_HOST = 3
 TCP_TIMEOUT  = 6.0
 CONCURRENCY  = 80
 
-# RU IP ranges for subscription 2 (Yandex, VK, Mail.ru, Selectel, Majordomo)
 _RU_NETWORKS_RAW = [
-    "158.160.0.0/16", "130.193.32.0/19", "51.250.0.0/16", "84.201.128.0/17",  # Yandex
-    "84.23.52.0/22", "95.163.248.0/22", "79.137.174.0/23", "37.139.32.0/22", "90.156.151.0/24",  # VK
-    "5.188.136.0/21", "5.188.140.0/24",  # Mail.ru
-    "95.213.128.0/17", "92.53.64.0/19", "77.244.208.0/20", "188.225.0.0/18", "178.236.128.0/20",  # Selectel
-    "178.250.240.0/21",  # Majordomo
+    "158.160.0.0/16", "130.193.32.0/19", "51.250.0.0/16", "84.201.128.0/17",
+    "84.23.52.0/22", "95.163.248.0/22", "79.137.174.0/23", "37.139.32.0/22", "90.156.151.0/24",
+    "5.188.136.0/21", "5.188.140.0/24",
+    "95.213.128.0/17", "92.53.64.0/19", "77.244.208.0/20", "188.225.0.0/18", "178.236.128.0/20",
+    "178.250.240.0/21",
 ]
 RU_NETWORKS = [ipaddress.ip_network(n, strict=False) for n in _RU_NETWORKS_RAW]
+
+SELECTEL_RANGES = [
+    ipaddress.ip_network("36.46.0.0/16", strict=False),
+    ipaddress.ip_network("45.153.0.0/16", strict=False),
+]
 
 UUID_RE   = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$', re.I)
 ARABIC_RE = re.compile(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]')
@@ -61,6 +64,17 @@ def _ip_in_ru_networks(host: str) -> bool:
         except Exception:
             return False
     return any(addr in net for net in RU_NETWORKS)
+
+
+def _is_selectel(host: str) -> bool:
+    try:
+        addr = ipaddress.ip_address(host)
+    except ValueError:
+        try:
+            addr = ipaddress.ip_address(socket.gethostbyname(host))
+        except Exception:
+            return False
+    return any(addr in net for net in SELECTEL_RANGES)
 
 
 def _lines(path):
@@ -221,7 +235,6 @@ async def probe_key(key) -> float:
     if sec in ("reality", "tls") and sni:
         lat = await tls_check(host, port, sni)
         if lat > 0: return lat
-        # reality серверы могут отклонять не-VLESS TLS — пробуем plain TCP
         return await tcp_check(host, port)
 
     try:
@@ -298,7 +311,13 @@ def _build_remark(key, lat):
 
     _COUNTER["n"] += 1
     isp_short = isp.split()[0][:14] if isp else host[:14]
-    return f"{flag} {prefix} | {isp_short} | #{_COUNTER['n']}"
+    
+    if _is_selectel(host):
+        suffix = " | Не для ТГ, ТТ"
+    else:
+        suffix = ""
+    
+    return f"{flag} {prefix} | {isp_short}{suffix} | #{_COUNTER['n']}"
 
 
 def _b64e(s): return base64.b64encode(s.encode()).decode()
@@ -307,12 +326,10 @@ def _b64e(s): return base64.b64encode(s.encode()).decode()
 def _make_announce(updated_at: str) -> str:
     return (
         f"🕐 Обновлено: {updated_at} UTC\n\n"
-        "📖 Как подключиться:\n"
-        "1️⃣  Нажмите кнопку обновления подписки (🔄)\n"
-        "2️⃣  Нажмите кнопку пинга сервера рядом(🕒)\n"
-        "3️⃣  Выберите сервер с наименьшим пингом (100 мс ⚡)\n\n"
-        "⚠️  Не заходите на российские сайты через VPN!\n"
-        "    Это замедляет соединение и может вызвать блокировку."
+        "📖 Инструкция подключения:\n"
+        "1️⃣  Обновить подписку (🔄) | 2️⃣  Пинг серверов (🕒)\n"
+        "3️⃣  Выбрать быстрый (меньше ms) | 4️⃣  Подключиться (✅)\n\n"
+        "💡 Совет: Используйте прямое подключение для РФ сайтов"
     )
 
 
@@ -453,8 +470,32 @@ def write_clash(keys_with_lat):
     _build_clash_config(keys_with_lat, CLASH_FILE, "WhiteVless")
 
 
-def write_clash_2(keys_with_lat):
-    _build_clash_config(keys_with_lat, CLASH_FILE_2, "WhiteVless RU")
+def add_routing_profiles():
+    if not os.path.exists(ROUTING_PROFILES_FILE):
+        log.warning(f"routing profiles file not found: {ROUTING_PROFILES_FILE}")
+        return
+    
+    try:
+        with open(ROUTING_PROFILES_FILE, "r", encoding="utf-8") as f:
+            profiles = json.load(f)
+        
+        routing_profiles = [p for p in profiles if p.get("type") == "routing"]
+        control_profiles = [p for p in profiles if p.get("type") == "control"]
+        
+        log.info(f"routing profiles: {len(routing_profiles)} routing, {len(control_profiles)} control")
+        
+        for profile in routing_profiles:
+            name = profile.get("name", "Unknown")
+            description = profile.get("description", "")
+            auto_apply = " (auto)" if profile.get("auto_apply") else ""
+            log.info(f"  🔀 {name}{auto_apply}: {description}")
+        
+        for profile in control_profiles:
+            name = profile.get("name", "Unknown")
+            description = profile.get("description", "")
+            log.info(f"  ⚙️  {name}: {description}")
+    except Exception as e:
+        log.error(f"error loading routing profiles: {e}")
 
 
 def _dedup(keys):
@@ -472,13 +513,13 @@ def _dedup(keys):
 
 async def main():
     load_blocklist()
+    add_routing_profiles()
 
     connector = aiohttp.TCPConnector(limit=150, ssl=False)
     ua = {"User-Agent": "Mozilla/5.0 (compatible; WhiteVless/5.0)"}
 
     async with aiohttp.ClientSession(connector=connector, headers=ua) as session:
 
-        # ── Подписка 1: direct.txt → filtered_vless_keys.txt ─────────────────
         all_keys = await fetch_direct(session)
         log.info(f"collected: {len(all_keys)}")
 
@@ -496,7 +537,6 @@ async def main():
         write_clash(selected)
         log.info(f"sub1 done: {len(selected)} keys")
 
-        # ── Подписка 2: Test.txt → filtered_vless_keys_2.txt (только RU IP) ──
         log.info("=" * 60)
         all_keys_2 = await fetch_test(session)
         log.info(f"[sub2] collected: {len(all_keys_2)}")
@@ -505,7 +545,6 @@ async def main():
             log.info("[sub2] no sources in Test.txt, skipping")
             return
 
-        # резолвим все уникальные хосты параллельно
         unique_hosts = list(dict.fromkeys(_extract(k, "host") for k in all_keys_2 if _extract(k, "host")))
         log.info(f"[sub2] resolving {len(unique_hosts)} unique hosts...")
         loop = asyncio.get_event_loop()
@@ -525,8 +564,6 @@ async def main():
         deduped2 = _dedup(ru_filtered)
         log.info(f"[sub2] after dedup: {len(deduped2)}")
 
-        # TCP-проверка с GitHub Actions бесполезна для RU IP — серверы недоступны из США/EU.
-        # Сортируем по приоритету порта: 443 первым, остальные по возрастанию.
         def _port_priority(key):
             port = _extract(key, "port")
             return 0 if port == 443 else port
@@ -536,13 +573,9 @@ async def main():
 
         await geo_lookup(session, list(dict.fromkeys(_extract(k, "host") for k in selected2)))
 
-        # wrap в (0, key) чтобы не менять write_output_2 / write_clash_2
         selected2_with_lat = [(0, k) for k in selected2]
         write_output_2(selected2_with_lat)
-        write_clash_2(selected2_with_lat)
 
-        write_output_2(selected2_with_lat)
-        write_clash_2(selected2_with_lat)
         log.info(f"[sub2] done: {len(selected2)} keys")
 
 
