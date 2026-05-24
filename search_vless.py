@@ -515,7 +515,7 @@ async def main():
     add_routing_profiles()
 
     connector = aiohttp.TCPConnector(limit=150, ssl=False)
-    ua = {"User-Agent": "Mozilla/5.0 (compatible; WhiteVless/5.0)"}
+    ua = {"User-Agent": "Happ/3.18.3/Happ/2.8.0/Windows/22226661337228"}
 
     async with aiohttp.ClientSession(connector=connector, headers=ua) as session:
 
